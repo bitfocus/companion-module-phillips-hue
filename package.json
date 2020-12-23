@@ -1,0 +1,19 @@
+{
+	"name": "template-es6",
+	"version": "0.0.1",
+	"api_version": "1.0.0",
+	"keywords": [
+		"Philips",
+		"philips-hue"
+		],
+	"manufacturer": "Philips",
+	"product": "philips-hue",
+	"shortname": "philips-hue",
+	"description": "philips-hue plugin for Companion",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "Mathias Halén <matte_halen@hotmail.com>",
+	"license": "MIT"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "philisp_hue",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx nodemon ./index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-hue-api": "^4.0.9",
+    "nodemon": "^2.0.6"
+  }
+}
