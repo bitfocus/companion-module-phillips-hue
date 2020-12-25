@@ -75,8 +75,9 @@ instance.prototype.config_fields = function () {
 			id: 'username',
 			label: 'Username',
 			width: 8,
+			value: self.users
 			//regex: self.REGEX_IP
-			regex: self.REGEX_USERNAME
+			//regex: self.REGEX_USERNAME
 		},
 		{
 			type: 'dropdown',
@@ -143,6 +144,7 @@ instance.prototype.CreateUser = function() {
 
 	CREATE_USER.discoverAndCreateUser().then(data => {
 		self.log('info', data);
+		self.users = data;
 	});
 
 
@@ -297,6 +299,7 @@ instance.prototype.action = function(action) {
 	var type;
 	var preset;
 	var time;
+	var user = self.config.username
 
 	debug('action: ', action);
 
@@ -311,7 +314,7 @@ instance.prototype.action = function(action) {
 
       for ( const [key,id] of Object.entries( data ) ) {
         if (key == data2) {
-          SET_LIGHT_STATES.setLight_Switch(id,onoff);
+          SET_LIGHT_STATES.setLight_Switch(user,id,onoff);
         }
       };
 
@@ -328,7 +331,7 @@ instance.prototype.action = function(action) {
 
       for ( const [key,id] of Object.entries( data ) ) {
         if (key == data2) {
-          SET_LIGHT_STATES.setLight_Switch_Bri(id,onoff,bri);
+          SET_LIGHT_STATES.setLight_Switch_Bri(user,id,onoff,bri);
         }
       };
 
@@ -344,11 +347,9 @@ instance.prototype.action = function(action) {
 
 			for ( const [key,id] of Object.entries( data ) ) {
         if (key == data2) {
-          SET_GROUPS_STATES.setRoom_Switch(id,onoff);
+          SET_GROUPS_STATES.setRoom_Switch(user,id,onoff);
         }
       };
-
-
 
       break;
     case 'LightGroup':
