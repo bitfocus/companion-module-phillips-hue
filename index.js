@@ -4,6 +4,7 @@ var HUE_ALL_LAMPS							= require('./lib/getAllLights.js');
 var SET_LIGHT_STATE						= require('./lib/setLightStateUsingObject.js');
 var SET_LIGHT_STATES					= require('./lib/setLightStateUsingState.js');
 var SET_GROUPS_STATES					= require('./lib/setGroupLightState.js');
+var CREATE_USER								= require('./lib/createUser.js');
 
 var debug;
 var log;
@@ -34,14 +35,32 @@ function instance(system, id, config) {
 
 instance.prototype.updateConfig = function(config) {
 	var self = this;
-
 	self.config = config;
+	console.log("----------when is this pushed");
+	console.log(self.config.CreateUser);
+	console.log(self.config.CreateUser = true);
+	console.log(self.config.CreateUser == true);
+
+	console.log(self.config.CreateUser === true);
+	if (self.config.CreateUser === true) {
+			console.log("---------- CreateUser === true");
+
+
+			if (0 === self.config.username.length) {
+				console.log("STRING IS 0 LEGNTH");
+					self.CreateUser();
+			}
+
+
+	}
+
 };
 instance.prototype.init = function() {
 	var self = this;
 
 	self.status(self.STATE_OK);
 	self.updateLightList();
+
 
 	debug = self.debug;
 	log = self.log;
@@ -58,6 +77,16 @@ instance.prototype.config_fields = function () {
 			width: 8,
 			//regex: self.REGEX_IP
 			regex: self.REGEX_USERNAME
+		},
+		{
+			type: 'dropdown',
+			label: 'CreateUser',
+			id: 'CreateUser',
+			default: "true",
+			choices: [
+				{ id: null, label: 'Select CreateUser To Create A User' },
+				{ id: true, label: 'CreateUser' }
+			]
 		}
 	]
 };
@@ -99,6 +128,35 @@ instance.prototype.updateLightList = function() {
   .then(data => {
       self.actions();
   })
+
+};
+instance.prototype.CreateUser = function() {
+	var self = this;
+	self.users = {};
+	console.log("CreateUser function triggerd");
+	//console.log(self.REGEX_USERNAME);
+	console.log(self.config.username);
+	self.log('warn', 'you data/message');
+	self.log('info', self.config.CreateUser);
+	self.log('debug', 'you data/message');
+	//self.log('info', CREATE_USER.discoverAndCreateUser());
+
+	CREATE_USER.discoverAndCreateUser().then(data => {
+		self.log('info', data);
+	});
+
+
+
+	// console.log("users before config = "+self.users);
+	// self.users = self.config.username
+	// console.log("users after config = "+self.users);
+	//
+	// console.log("CreateUser is triggerd");
+	// console.log(self.config);
+
+
+	//CREATE_USER.discoverAndCreateUser();
+	//self.REGEX_USERNAME
 
 };
 
