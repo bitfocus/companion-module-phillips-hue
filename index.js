@@ -269,6 +269,36 @@ instance.prototype.actions = function(system) {
         }
 			]
 		},
+		'Room_Switch_Bri':{
+      label: 'Room_Switch_Bri',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Rooms',
+          id: 'Rooms',
+          default: "Chose Rooms",
+          choices: self.allRomslist
+        },
+        {
+          type: 'dropdown',
+          label: 'ON/OFF',
+          id: 'ON/OFF',
+          default: true,
+          choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
+        },
+        {
+          type: 'number',
+          label: 'Brightness',
+          tooltip: 'Sets the Brightness (1-254)',
+          min: 1,
+          max: 254,
+          id: 'bri',
+          default: 1,
+          range: false
+          //choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
+        }
+      ]
+    },
 		'LightGroup': {
 			label: 'LightGroup',
 			options: [
@@ -350,6 +380,23 @@ instance.prototype.action = function(action) {
           SET_GROUPS_STATES.setRoom_Switch(user,id,onoff);
         }
       };
+
+      break;
+		case 'Room_Switch_Bri':
+      console.log("-----> Room_Switch_Bri");
+      var data = self.rooms;
+      console.log(data);
+      //console.log(action.options);
+      var data2 = action.options.Rooms;
+      var onoff = action.options["ON/OFF"];
+      var bri   = action.options["bri"];
+
+      for ( const [key,id] of Object.entries( data ) ) {
+        if (key == data2) {
+					SET_GROUPS_STATES.setRoom_Switch_Bri(user,id,onoff,bri);
+        }
+      };
+
 
       break;
     case 'LightGroup':
