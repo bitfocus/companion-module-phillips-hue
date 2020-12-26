@@ -35,8 +35,9 @@ function instance(system, id, config) {
 
 instance.prototype.updateConfig = function(config) {
 	var self = this;
+	self.updateLightList();
+
 	self.config = config;
-	console.log("----------when is this pushed");
 	console.log(self.config.CreateUser);
 	console.log(self.config.CreateUser = true);
 	console.log(self.config.CreateUser == true);
@@ -146,19 +147,6 @@ instance.prototype.CreateUser = function() {
 		self.log('info', data);
 		self.users = data;
 	});
-
-
-
-	// console.log("users before config = "+self.users);
-	// self.users = self.config.username
-	// console.log("users after config = "+self.users);
-	//
-	// console.log("CreateUser is triggerd");
-	// console.log(self.config);
-
-
-	//CREATE_USER.discoverAndCreateUser();
-	//self.REGEX_USERNAME
 
 };
 
@@ -299,7 +287,7 @@ instance.prototype.actions = function(system) {
         }
       ]
     },
-		'LightGroup': {
+		'LightGroup_Switch': {
 			label: 'LightGroup',
 			options: [
 				{
@@ -308,8 +296,46 @@ instance.prototype.actions = function(system) {
 					id: 'LightGroup',
 					default: "Chose LightGroup",
 					choices: self.allGroupslist
-				}]
+				},
+				{
+					type: 'dropdown',
+					label: 'ON/OFF',
+					id: 'ON/OFF',
+					default: true,
+					choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
+				}
+			]
 		},
+		'LightGroup_Switch_Bri':{
+      label: 'LightGroup_Switch_Bri',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'LightGroup',
+          id: 'LightGroup',
+          default: "Chose LightGroup",
+          choices: self.allGroupslist
+        },
+        {
+          type: 'dropdown',
+          label: 'ON/OFF',
+          id: 'ON/OFF',
+          default: true,
+          choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
+        },
+        {
+          type: 'number',
+          label: 'Brightness',
+          tooltip: 'Sets the Brightness (1-254)',
+          min: 1,
+          max: 254,
+          id: 'bri',
+          default: 1,
+          range: false
+          //choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
+        }
+      ]
+    },
 		'Zones': {
 			label: 'Zones',
       options: [
@@ -399,10 +425,46 @@ instance.prototype.action = function(action) {
 
 
       break;
-    case 'LightGroup':
+    case 'LightGroup_Switch':
       console.log("-----> LightGroup");
 			var data = self.groups;
 			console.log(data);
+			console.log(action.options);
+			var data2 = action.options.LightGroup;
+			var onoff = action.options["ON/OFF"];
+
+			for ( const [key,id] of Object.entries( data ) ) {
+				console.log("loop");
+				console.log(key);
+				console.log(data2);
+				console.log(key == data2);
+				if (key == data2) {
+					console.log("Inside");
+					SET_GROUPS_STATES.setLightGroup_Switch(user,id,onoff);
+				}
+			};
+
+      break;
+		case 'LightGroup_Switch_Bri':
+      console.log("-----> LightGroup_Switch_Bri");
+      var data = self.groups;
+      console.log(data);
+      console.log(action.options);
+      var data2 = action.options.LightGroup;
+      var onoff = action.options["ON/OFF"];
+      var bri   = action.options["bri"];
+
+      for ( const [key,id] of Object.entries( data ) ) {
+				console.log("loop");
+				console.log(key);
+				console.log(data2);
+				console.log(key == data2);
+        if (key == data2) {
+					SET_GROUPS_STATES.setLightGroup_Switch_Bri(user,id,onoff,bri);
+        }
+      };
+
+
       break;
     case 'Zones':
       console.log("-----> Zones");
