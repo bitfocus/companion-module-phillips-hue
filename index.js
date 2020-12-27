@@ -94,8 +94,9 @@ instance.prototype.config_fields = function () {
 };
 instance.prototype.updateLightList = function() {
 	var self = this;
+	var user = self.config.username
 
-	HUE_ALL_LAMPS.getAllLights()
+	HUE_ALL_LAMPS.getAllLights(user)
 	.then(data => {
 		self.lights = {};
 		self.lights = data;
@@ -104,7 +105,7 @@ instance.prototype.updateLightList = function() {
 			self.actions();
 	})
 
-  HUE_ALL_GROUPS.getAllRooms()
+  HUE_ALL_GROUPS.getAllRooms(user)
   .then(data => {
     self.rooms = {};
     self.rooms = data;
@@ -113,7 +114,7 @@ instance.prototype.updateLightList = function() {
       self.actions();
   })
 
-  HUE_ALL_GROUPS.getAllZones()
+  HUE_ALL_GROUPS.getAllZones(user)
   .then(data => {
     self.zones = {};
     self.zones = data;
@@ -122,7 +123,7 @@ instance.prototype.updateLightList = function() {
       self.actions();
   })
 
-  HUE_ALL_GROUPS.getAllLightGroups()
+  HUE_ALL_GROUPS.getAllLightGroups(user)
   .then(data => {
     self.groups = {};
     self.groups = data;
