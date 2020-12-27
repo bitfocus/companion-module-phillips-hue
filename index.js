@@ -336,8 +336,8 @@ instance.prototype.actions = function(system) {
         }
       ]
     },
-		'Zones': {
-			label: 'Zones',
+		'Zones_Switch': {
+			label: 'Zones_Switch',
       options: [
 				{
 					type: 'dropdown',
@@ -345,7 +345,45 @@ instance.prototype.actions = function(system) {
 					id: 'Zones',
 					default: "Chose Zones",
 					choices: self.allZoneslist
-				}]
+				},
+				{
+					type: 'dropdown',
+					label: 'ON/OFF',
+					id: 'ON/OFF',
+					default: true,
+					choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
+				}
+			]
+		},
+		'Zones_Switch_Bri': {
+			label: 'Zones_Switch_Bri',
+      options: [
+				{
+					type: 'dropdown',
+					label: 'Zones',
+					id: 'Zones',
+					default: "Chose Zones",
+					choices: self.allZoneslist
+				},
+				{
+					type: 'dropdown',
+					label: 'ON/OFF',
+					id: 'ON/OFF',
+					default: true,
+					choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
+				},
+				{
+					type: 'number',
+					label: 'Brightness',
+					tooltip: 'Sets the Brightness (1-254)',
+					min: 1,
+					max: 254,
+					id: 'bri',
+					default: 1,
+					range: false
+					//choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
+				}
+			]
 		}
 	});
 }
@@ -466,10 +504,43 @@ instance.prototype.action = function(action) {
 
 
       break;
-    case 'Zones':
-      console.log("-----> Zones");
+    case 'Zones_Switch':
+      console.log("-----> Zones_Switch");
 			var data = self.zones;
 			console.log(data);
+			console.log(action.options);
+			var data2 = action.options.Zones;
+			var onoff = action.options["ON/OFF"];
+
+			for ( const [key,id] of Object.entries( data ) ) {
+				console.log("loop");
+				console.log(key);
+				console.log(data2);
+				console.log(key == data2);
+				if (key == data2) {
+					console.log("Inside");
+					SET_GROUPS_STATES.setZone_Switch(user,id,onoff);
+				}
+			};
+      break;
+		case 'Zones_Switch_Bri':
+      console.log("-----> Zones_Switch_Bri");
+			var data = self.zones;
+			console.log(data);
+      console.log(action.options);
+      var data2 = action.options.Zones;
+      var onoff = action.options["ON/OFF"];
+      var bri   = action.options["bri"];
+
+      for ( const [key,id] of Object.entries( data ) ) {
+				console.log("loop");
+				console.log(key);
+				console.log(data2);
+				console.log(key == data2);
+        if (key == data2) {
+					SET_GROUPS_STATES.setZone_Switch_Bri(user,id,onoff,bri);
+        }
+      };
       break;
     }
 };
