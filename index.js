@@ -1,9 +1,11 @@
 var instance_skel 						= require('../../instance_skel');
 var HUE_ALL_GROUPS						= require('./lib/getAllGroups.js');
 var HUE_ALL_LAMPS							= require('./lib/getAllLights.js');
+var HUE_ALL_SCENES						= require('./lib/getAllScenes.js');
 var SET_LIGHT_STATE						= require('./lib/setLightStateUsingObject.js');
 var SET_LIGHT_STATES					= require('./lib/setLightStateUsingState.js');
 var SET_GROUPS_STATES					= require('./lib/setGroupLightState.js');
+var SET_SCENES								= require('./lib/setSceneUsingID.js');
 var CREATE_USER								= require('./lib/createUser.js');
 
 var debug;
@@ -132,6 +134,16 @@ instance.prototype.updateLightList = function() {
       self.actions();
   })
 
+	HUE_ALL_SCENES.getAllScenes(user)
+	.then(data => {
+		self.scenes = {};
+		self.scenes = data;
+
+	})
+	.then(data => {
+			self.actions();
+	})
+
 };
 instance.prototype.CreateUser = function() {
 	var self = this;
@@ -189,7 +201,26 @@ instance.prototype.actions = function(system) {
 		}
 	}
 
+	self.allSceneslist = [];
+	if (self.scenes !== undefined) {
+		for (s in self.scenes) {
+			self.allSceneslist.push({ id: s, label: s });
+		}
+	}
+
 	self.system.emit('instance_actions', self.id, {
+		'All_Scenes':{
+      label: 'All_Scenes',
+      options: [
+        {
+          type: 'dropdown',
+          label: 'Scenes',
+          id: 'Scenes',
+          default: "Chose Scenes",
+          choices: self.allSceneslist
+        }
+      ]
+    },
     'Lamps_Switch':{
       label: 'Lamps_Switch',
       options: [
@@ -399,6 +430,22 @@ instance.prototype.action = function(action) {
 	debug('action: ', action);
 
   switch (action.action) {
+		case 'All_Scenes':
+			console.log("-----> All_Scenes");
+			var data = self.scenes;
+			console.log(data);
+			//console.log(action.options);
+			var data2 = action.options.Scenes;
+
+			for ( const [key,id] of Object.entries( data ) ) {
+				if (key == data2) {
+					console.log("INSIDE FOR -------------<<<<");
+					SET_SCENES.setScene(user,id);
+				}
+			};
+
+
+			break;
     case 'Lamps_Switch':
       console.log("-----> Lamps_Switch");
       var data = self.lights;
