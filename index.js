@@ -40,21 +40,18 @@ instance.prototype.updateConfig = function(config) {
 	self.updateLightList();
 
 	self.config = config;
-	console.log(self.config.CreateUser);
-	console.log(self.config.CreateUser = true);
-	console.log(self.config.CreateUser == true);
 
-	console.log(self.config.CreateUser === true);
-	if (self.config.CreateUser === true) {
-			console.log("---------- CreateUser === true");
-
-
+	if (self.config.CreateUser) {
+			console.log("----------> CreateUser is Checked");
+			self.log('info', "----------> CreateUser is Checked");
+			console.log("Leave Username field empty to create a new user!");
+			self.log('info', "Leave Username field empty to create a new user!");
+			console.log("----------> Don't forget to push the button on your Huw Bridge to make the CreateUser work !");
+			self.log('info', "----------> Don't forget to push the button on your Huw Bridge to make the CreateUser work !");
 			if (0 === self.config.username.length) {
-				console.log("STRING IS 0 LEGNTH");
+				console.log("-----> Username field is empty. Creating New username!");
 					self.CreateUser();
 			}
-
-
 	}
 
 };
@@ -79,18 +76,12 @@ instance.prototype.config_fields = function () {
 			label: 'Username',
 			width: 8,
 			value: self.users
-			//regex: self.REGEX_IP
-			//regex: self.REGEX_USERNAME
 		},
 		{
-			type: 'dropdown',
+			type: 'checkbox',
 			label: 'CreateUser',
 			id: 'CreateUser',
-			default: "true",
-			choices: [
-				{ id: null, label: 'Select CreateUser To Create A User' },
-				{ id: true, label: 'CreateUser' }
-			]
+			default: false,
 		}
 	]
 };
@@ -149,12 +140,8 @@ instance.prototype.CreateUser = function() {
 	var self = this;
 	self.users = {};
 	console.log("CreateUser function triggerd");
-	//console.log(self.REGEX_USERNAME);
 	console.log(self.config.username);
-	self.log('warn', 'you data/message');
-	self.log('info', self.config.CreateUser);
-	self.log('debug', 'you data/message');
-	//self.log('info', CREATE_USER.discoverAndCreateUser());
+	//self.log('info', self.config.CreateUser);
 
 	CREATE_USER.discoverAndCreateUser().then(data => {
 		self.log('info', data);
@@ -266,7 +253,6 @@ instance.prototype.actions = function(system) {
           id: 'bri',
           default: 1,
           range: false
-          //choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
         }
       ]
     },
@@ -315,7 +301,6 @@ instance.prototype.actions = function(system) {
           id: 'bri',
           default: 1,
           range: false
-          //choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
         }
       ]
     },
@@ -364,7 +349,6 @@ instance.prototype.actions = function(system) {
           id: 'bri',
           default: 1,
           range: false
-          //choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
         }
       ]
     },
@@ -433,13 +417,12 @@ instance.prototype.action = function(action) {
 		case 'All_Scenes':
 			console.log("-----> All_Scenes");
 			var data = self.scenes;
-			console.log(data);
+			// console.log(data);
 			//console.log(action.options);
 			var data2 = action.options.Scenes;
 
 			for ( const [key,id] of Object.entries( data ) ) {
 				if (key == data2) {
-					console.log("INSIDE FOR -------------<<<<");
 					SET_SCENES.setScene(user,id);
 				}
 			};
@@ -449,7 +432,7 @@ instance.prototype.action = function(action) {
     case 'Lamps_Switch':
       console.log("-----> Lamps_Switch");
       var data = self.lights;
-      console.log(data);
+      // console.log(data);
       //console.log(action.options);
       var data2 = action.options.Lamps;
       var onoff = action.options["ON/OFF"];
@@ -465,7 +448,7 @@ instance.prototype.action = function(action) {
     case 'Lamps_Switch_Bri':
       console.log("-----> Lamps_Switch_Bri");
       var data = self.lights;
-      console.log(data);
+      // console.log(data);
       //console.log(action.options);
       var data2 = action.options.Lamps;
       var onoff = action.options["ON/OFF"];
@@ -482,8 +465,8 @@ instance.prototype.action = function(action) {
     case 'Room_Switch':
       console.log("-----> Room_Switch");
 			var data = self.rooms;
-			console.log(data);
-			console.log(action.options);
+			// console.log(data);
+			// console.log(action.options);
 			var data2 = action.options.Rooms;
       var onoff = action.options["ON/OFF"];
 
@@ -497,7 +480,7 @@ instance.prototype.action = function(action) {
 		case 'Room_Switch_Bri':
       console.log("-----> Room_Switch_Bri");
       var data = self.rooms;
-      console.log(data);
+      // console.log(data);
       //console.log(action.options);
       var data2 = action.options.Rooms;
       var onoff = action.options["ON/OFF"];
@@ -514,16 +497,16 @@ instance.prototype.action = function(action) {
     case 'LightGroup_Switch':
       console.log("-----> LightGroup");
 			var data = self.groups;
-			console.log(data);
-			console.log(action.options);
+			// console.log(data);
+			// console.log(action.options);
 			var data2 = action.options.LightGroup;
 			var onoff = action.options["ON/OFF"];
 
 			for ( const [key,id] of Object.entries( data ) ) {
-				console.log("loop");
-				console.log(key);
-				console.log(data2);
-				console.log(key == data2);
+				// console.log("loop");
+				// console.log(key);
+				// console.log(data2);
+				// console.log(key == data2);
 				if (key == data2) {
 					console.log("Inside");
 					SET_GROUPS_STATES.setLightGroup_Switch(user,id,onoff);
@@ -534,17 +517,17 @@ instance.prototype.action = function(action) {
 		case 'LightGroup_Switch_Bri':
       console.log("-----> LightGroup_Switch_Bri");
       var data = self.groups;
-      console.log(data);
-      console.log(action.options);
+      // console.log(data);
+      // console.log(action.options);
       var data2 = action.options.LightGroup;
       var onoff = action.options["ON/OFF"];
       var bri   = action.options["bri"];
 
       for ( const [key,id] of Object.entries( data ) ) {
-				console.log("loop");
-				console.log(key);
-				console.log(data2);
-				console.log(key == data2);
+				// console.log("loop");
+				// console.log(key);
+				// console.log(data2);
+				// console.log(key == data2);
         if (key == data2) {
 					SET_GROUPS_STATES.setLightGroup_Switch_Bri(user,id,onoff,bri);
         }
@@ -555,16 +538,16 @@ instance.prototype.action = function(action) {
     case 'Zones_Switch':
       console.log("-----> Zones_Switch");
 			var data = self.zones;
-			console.log(data);
-			console.log(action.options);
+			// console.log(data);
+			// console.log(action.options);
 			var data2 = action.options.Zones;
 			var onoff = action.options["ON/OFF"];
 
 			for ( const [key,id] of Object.entries( data ) ) {
-				console.log("loop");
-				console.log(key);
-				console.log(data2);
-				console.log(key == data2);
+				// console.log("loop");
+				// console.log(key);
+				// console.log(data2);
+				// console.log(key == data2);
 				if (key == data2) {
 					console.log("Inside");
 					SET_GROUPS_STATES.setZone_Switch(user,id,onoff);
@@ -574,17 +557,17 @@ instance.prototype.action = function(action) {
 		case 'Zones_Switch_Bri':
       console.log("-----> Zones_Switch_Bri");
 			var data = self.zones;
-			console.log(data);
-      console.log(action.options);
+			// console.log(data);
+      // console.log(action.options);
       var data2 = action.options.Zones;
       var onoff = action.options["ON/OFF"];
       var bri   = action.options["bri"];
 
       for ( const [key,id] of Object.entries( data ) ) {
-				console.log("loop");
-				console.log(key);
-				console.log(data2);
-				console.log(key == data2);
+				// console.log("loop");
+				// console.log(key);
+				// console.log(data2);
+				// console.log(key == data2);
         if (key == data2) {
 					SET_GROUPS_STATES.setZone_Switch_Bri(user,id,onoff,bri);
         }
