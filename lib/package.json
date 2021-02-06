@@ -8,9 +8,5 @@
     "start": "npx nodemon ./index.js"
   },
   "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "node-hue-api": "^4.0.9",
-    "nodemon": "^2.0.6"
-  }
+  "license": "ISC"
 }

@@ -15,5 +15,9 @@
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"author": "Mathias Halén <matte_halen@hotmail.com>",
-	"license": "MIT"
+	"license": "MIT",
+	"dependencies": {
+		"node-hue-api": "^4.0.9",
+		"nodemon": "^2.0.6"
+	  }
 }
