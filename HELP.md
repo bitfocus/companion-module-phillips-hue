@@ -9,6 +9,8 @@ This module will allow you to control Philips-hue lights.
   * Press "Apply Changes" button on Companion config page.
   * In the LOG Info Section of Companion there should be a new username created. Copy that and pasted to the username part on the Companion config page.
 
+### KNOW BUGS
+* Needs a restart of companion after entering the username and pressing Apply changes. 
 
 ### Available actions
 * All_Scenes - Lets you chose which scen to trigger. OBS! All scen from are in this list
