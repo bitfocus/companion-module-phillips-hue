@@ -22,3 +22,6 @@ This module will allow you to control Philips-hue lights.
 * LightGroup_Switch_Bri - Lets you turn on or off a specifig lightgroup and also set the brightness
 * Zones_Switch - Lets you turn on or off a specifig zone
 * Zones_Switch_Bri - Lets you turn on or off a specifig zone and also set the brightness
+
+### Delete users
+* https://account.meethue.com/apps - can only be done thrue meethue website
