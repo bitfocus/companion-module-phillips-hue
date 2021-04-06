@@ -1,6 +1,6 @@
 {
 	"name": "phillips-hue",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"api_version": "1.0.0",
 	"keywords": [
 		"Philips",
@@ -17,7 +17,6 @@
 	"author": "Mathias Halén <matte_halen@hotmail.com>",
 	"license": "MIT",
 	"dependencies": {
-		"node-hue-api": "^4.0.9",
-		"nodemon": "^2.0.6"
-	  }
+		"node-hue-api": "^4.0.9"
+	}
 }
