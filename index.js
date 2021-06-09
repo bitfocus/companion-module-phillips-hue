@@ -19,20 +19,26 @@ function instance(system, id, config) {
 
 	self.actions(); // export actions
 
+	return self;
+}
+
+instance.GetUpgradeScripts = function() {
 	// Example: When this script was committed, a fix needed to be made
 	// this will only be run if you had an instance of an older "version" before.
 	// "version" is calculated out from how many upgradescripts your intance config has run.
 	// So just add a addUpgradeScript when you commit a breaking change to the config, that fixes
 	// the config.
 
-	self.addUpgradeScript(function () {
-		// just an example
-		if (self.config.host !== undefined) {
-			self.config.old_host = self.config.host;
+	return [
+		function (context, config) {
+			// just an example, that now cannot be removed/rewritten
+			if (config) {
+				if (config.host !== undefined) {
+					config.old_host = config.host;
+				}
+			}
 		}
-	});
-
-	return self;
+	]
 }
 
 instance.prototype.updateConfig = function(config) {
