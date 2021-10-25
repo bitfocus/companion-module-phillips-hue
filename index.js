@@ -48,15 +48,16 @@ instance.prototype.updateConfig = function(config) {
 	self.config = config;
 
 	if (self.config.CreateUser) {
-			console.log("----------> CreateUser is Checked");
-			self.log('info', "----------> CreateUser is Checked");
-			console.log("Leave Username field empty to create a new user!");
-			self.log('info', "Leave Username field empty to create a new user!");
-			console.log("----------> Don't forget to push the button on your Huw Bridge to make the CreateUser work !");
-			self.log('info', "----------> Don't forget to push the button on your Huw Bridge to make the CreateUser work !");
+			console.log("----------> CreateUser is Checked <----------");
+			self.log('info', "----------> CreateUser is Checked <----------");
+			console.log("--- Leave Username field empty to create a new user!");
+			self.log('info', "--- Leave Username field empty to create a new user!");
+			console.log("--- >>> Don't forget to push the button on your Huw Bridge to make the CreateUser work !");
+			self.log('info', "--- >>> Don't forget to push the button on your Huw Bridge to make the CreateUser work !");
 			if (0 === self.config.username.length) {
-				console.log("-----> Username field is empty. Creating New username!");
 					self.CreateUser();
+			}else{
+				console.log("-----> Username field is NOT empty !!");
 			}
 	}
 
@@ -142,17 +143,36 @@ instance.prototype.updateLightList = function() {
 	})
 
 };
-instance.prototype.CreateUser = function() {
+instance.prototype.CreateUser = async function() {
 	var self = this;
 	self.users = {};
-	console.log("CreateUser function triggerd");
-	console.log(self.config.username);
-	//self.log('info', self.config.CreateUser);
+	//console.log(self.config.username);
+	
+	try {
+		console.log("----------> CreateUser function triggerd <----------");
+		var createUser = await CREATE_USER.discoverAndCreateUser()
+		console.log("--- After await CreateUser")
+		console.log(createUser)
+		if(createUser != ""){
+			self.log('info', createUser);
+		}
+	} catch (error) {
+		console.log("----- >>> CreateUser Error <<< -----")
+		self.log('info',"----- >>> CreateUser Error <<< -----");
 
-	CREATE_USER.discoverAndCreateUser().then(data => {
-		self.log('info', data);
-		self.users = data;
-	});
+		self.log("error",error)
+		console.log(error)
+	}
+
+
+	// await CREATE_USER.discoverAndCreateUser().then(data => {
+	// 	self.log('info', data);
+	// 	self.users = data;
+	// }).catch(e => {
+	// 	console.log(e);
+	// 	self.log("Warning",error)
+	// }
+	// );
 
 };
 
