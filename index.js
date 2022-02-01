@@ -53,7 +53,7 @@ instance.prototype.updateConfig = function(config) {
 			console.log("--- Leave Username field empty to create a new user!");
 			self.log('info', "--- Leave Username field empty to create a new user!");
 			console.log("--- >>> Don't forget to push the button on your Huw Bridge to make the CreateUser work !");
-			self.log('info', "--- >>> Don't forget to push the button on your Huw Bridge to make the CreateUser work !");
+			self.log('info', "--- >>> Don't forget to push the button on your Hue Bridge to make the CreateUser work !");
 			if (0 === self.config.username.length) {
 					self.CreateUser();
 			}else{
