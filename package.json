@@ -5,7 +5,7 @@
 	"keywords": [
 		"Philips",
 		"philips-hue"
-		],
+	],
 	"manufacturer": "Philips",
 	"product": "philips-hue",
 	"shortname": "philips-hue",
@@ -18,5 +18,13 @@
 	"license": "MIT",
 	"dependencies": {
 		"node-hue-api": "^4.0.11"
+	},
+	"homepage": "https://github.com/bitfocus/companion-module-phillips-hue#readme",
+	"bugs": {
+		"url": "https://github.com/bitfocus/companion-module-phillips-hue/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bitfocus/companion-module-phillips-hue.git"
 	}
 }
