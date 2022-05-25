@@ -47,6 +47,11 @@ instance.prototype.updateConfig = function (config) {
     var self = this;
 
     self.config = config;
+
+    if (self.config.createuser) {
+        self.createUser();
+    }
+
     self.init();
 };
 
@@ -61,9 +66,18 @@ instance.prototype.init = function () {
 
     if (self.config.ip && self.config.username) {
         v3.api.createLocal(self.config.ip).connect(self.config.username).then((api) => {
-            // create local api instance and update all parameters
-            self.api = api;
-            self.updateParams();
+            // check if api is working correctly
+            api.users.getUserByName(self.config.username).then(() => {
+                // create local api instance and update all parameters
+                self.api = api;
+                self.updateParams();
+            }).catch(err => {
+                self.log('error', 'Unable to use API: ' + err.message);
+                self.status(self.STATUS_ERROR, 'Invalid user name');
+            })
+        }).catch(err => {
+            self.log('error', "Unable to connect: " + err.message);
+            self.status(self.STATUS_ERROR, 'Unable to connect to bridge');
         })
     }
 
@@ -82,6 +96,37 @@ instance.prototype.discoverBridges = function () {
         })
     });
 }
+
+instance.prototype.createUser = function () {
+    var self = this;
+
+    if (!self.config.ip) {
+        return;
+    }
+
+    console.log("createuser");
+    const APPLICATION_NAME = 'node-hue-api', DEVICE_NAME = 'companion';
+
+    v3.api.createLocal(self.config.ip).connect()
+        .then(api => {
+            return api.users.createUser(APPLICATION_NAME, DEVICE_NAME);
+        })
+        .then(createdUser => {
+            console.log(createdUser);
+            self.config.username = createdUser.username;
+            self.config.createuser = false;
+            self.saveConfig();
+        })
+        .catch(err => {
+            if (err.getHueErrorType && err.getHueErrorType() === 101) {
+                self.log('error', "You need to press the Link Button on the bridge first");
+            } else {
+                self.debug(`Unexpected Error: ${err}`);
+                self.log('error', "Unexpected Error: " + err.message);
+            }
+        })
+};
+
 
 instance.prototype.updateParams = function () {
     var self = this
@@ -138,7 +183,6 @@ instance.prototype.config_fields = function () {
             type: 'dropdown',
             id: 'ip',
             label: 'Bridge Address',
-            width: 5,
             default: '',
             allowCustom: true,
             choices: self.discoveredBridges.map((bridge) => ({
@@ -151,8 +195,13 @@ instance.prototype.config_fields = function () {
             type: 'textinput',
             id: 'username',
             label: 'Bridge User',
-            width: 10,
             required: true,
+        },
+        {
+            type: 'checkbox',
+            label: 'Create new User',
+            id: 'createuser',
+            default: false,
         }
     ]
 }
