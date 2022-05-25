@@ -1,12 +1,6 @@
 var instance_skel = require('../../instance_skel');
-var HUE_ALL_GROUPS = require('./lib/getAllGroups.js');
-var HUE_ALL_LAMPS = require('./lib/getAllLights.js');
-var HUE_ALL_SCENES = require('./lib/getAllScenes.js');
-var SET_LIGHT_STATE = require('./lib/setLightStateUsingObject.js');
-var SET_LIGHT_STATES = require('./lib/setLightStateUsingState.js');
-var SET_GROUPS_STATES = require('./lib/setGroupLightState.js');
-var SET_SCENES = require('./lib/setSceneUsingID.js');
-var CREATE_USER = require('./lib/createUser.js');
+
+const v3 = require('node-hue-api').v3
 
 var debug;
 var log;
@@ -16,6 +10,14 @@ function instance(system, id, config) {
 
     // super-constructor
     instance_skel.apply(this, arguments);
+
+    // create empty lists
+    self.discoveredBridges = [];
+    self.lights = [];
+    self.rooms = [];
+    self.zones = [];
+    self.lightGroups = [];
+    self.scenes = [];
 
     self.actions(); // export actions
 
@@ -43,138 +45,117 @@ instance.GetUpgradeScripts = function () {
 
 instance.prototype.updateConfig = function (config) {
     var self = this;
-    self.updateLightList();
 
     self.config = config;
-
-    if (self.config.CreateUser) {
-        console.log("----------> CreateUser is Checked <----------");
-        self.log('info', "----------> CreateUser is Checked <----------");
-        console.log("--- Leave Username field empty to create a new user!");
-        self.log('info', "--- Leave Username field empty to create a new user!");
-        console.log("--- >>> Don't forget to push the button on your Huw Bridge to make the CreateUser work !");
-        self.log('info', "--- >>> Don't forget to push the button on your Hue Bridge to make the CreateUser work !");
-        if (0 === self.config.username.length) {
-            self.CreateUser();
-        } else {
-            console.log("-----> Username field is NOT empty !!");
-        }
-    }
-
+    self.init();
 };
+
 instance.prototype.init = function () {
     var self = this;
 
-    self.status(self.STATE_OK);
-    self.updateLightList();
+    if (self.discoveredBridges.length === 0) {
+        self.discoverBridges();
+    }
 
+    self.status(self.STATUS_WARNING, 'Syncing');
+
+    if (self.config.ip && self.config.username) {
+        v3.api.createLocal(self.config.ip).connect(self.config.username).then((api) => {
+            // create local api instance and update all parameters
+            self.api = api;
+            self.updateParams();
+        })
+    }
 
     debug = self.debug;
     log = self.log;
 };
 
+instance.prototype.discoverBridges = function () {
+    var self = this;
+
+    self.discoveredBridges = []
+    v3.discovery.upnpSearch().then((results) => {
+        console.log(JSON.stringify(results, null, 2));
+        results.forEach((bridge) => {
+            self.discoveredBridges.push(bridge)
+        })
+    });
+}
+
+instance.prototype.updateParams = function () {
+    var self = this
+
+    if (!self.api) {
+        return
+    }
+
+    self.lights = [];
+    self.api.lights.getAll().then((lights) => {
+        self.lights = lights;
+        self.actions();
+    });
+
+    self.rooms = [];
+    self.zones = [];
+    self.lightGroups = [];
+    self.api.groups.getAll().then((groups) => {
+        groups.forEach((group) => {
+            switch (group.type) {
+                case 'Room':
+                    self.rooms.push(group);
+                    break;
+                case 'Zone':
+                    self.zones.push(group);
+                    break;
+                case 'LightGroup':
+                    self.lightGroups.push(group);
+                    break;
+            }
+        })
+
+        self.actions();
+    });
+
+    self.scenes = [];
+    self.api.scenes.getAll().then((scenes) => {
+        scenes.forEach((scene) => {
+            self.scenes.push(scene);
+        })
+
+        self.actions();
+    });
+
+    self.status(self.STATUS_OK);
+}
+
 // Return config fields for web config
 instance.prototype.config_fields = function () {
-    var self = this;
+    var self = this
+
     return [
+        {
+            type: 'dropdown',
+            id: 'ip',
+            label: 'Bridge Address',
+            width: 5,
+            default: '',
+            allowCustom: true,
+            choices: self.discoveredBridges.map((bridge) => ({
+                id: bridge.ipaddress,
+                label: bridge.name,
+            })),
+            regex: self.REGEX_IP,
+        },
         {
             type: 'textinput',
             id: 'username',
-            label: 'Username',
-            width: 8,
-            value: self.users
-        },
-        {
-            type: 'checkbox',
-            label: 'CreateUser',
-            id: 'CreateUser',
-            default: false,
+            label: 'Bridge User',
+            width: 10,
+            required: true,
         }
     ]
-};
-instance.prototype.updateLightList = function () {
-    var self = this;
-    var user = self.config.username
-
-    HUE_ALL_LAMPS.getAllLights(user)
-        .then(data => {
-            self.lights = {};
-            self.lights = data;
-        })
-        .then(data => {
-            self.actions();
-        })
-
-    HUE_ALL_GROUPS.getAllRooms(user)
-        .then(data => {
-            self.rooms = {};
-            self.rooms = data;
-        })
-        .then(data => {
-            self.actions();
-        })
-
-    HUE_ALL_GROUPS.getAllZones(user)
-        .then(data => {
-            self.zones = {};
-            self.zones = data;
-        })
-        .then(data => {
-            self.actions();
-        })
-
-    HUE_ALL_GROUPS.getAllLightGroups(user)
-        .then(data => {
-            self.groups = {};
-            self.groups = data;
-        })
-        .then(data => {
-            self.actions();
-        })
-
-    HUE_ALL_SCENES.getAllScenes(user)
-        .then(data => {
-            self.scenes = {};
-            self.scenes = data;
-
-        })
-        .then(data => {
-            self.actions();
-        })
-
-};
-instance.prototype.CreateUser = async function () {
-    var self = this;
-    self.users = {};
-    //console.log(self.config.username);
-
-    try {
-        console.log("----------> CreateUser function triggerd <----------");
-        var createUser = await CREATE_USER.discoverAndCreateUser()
-        console.log("--- After await CreateUser")
-        console.log(createUser)
-        if (createUser != "") {
-            self.log('info', createUser);
-        }
-    } catch (error) {
-        console.log("----- >>> CreateUser Error <<< -----")
-        self.log('info', "----- >>> CreateUser Error <<< -----");
-
-        self.log("error", error)
-        console.log(error)
-    }
-
-
-    // await CREATE_USER.discoverAndCreateUser().then(data => {
-    // 	self.log('info', data);
-    // 	self.users = data;
-    // }).catch(e => {
-    // 	console.log(e);
-    // 	self.log("Warning",error)
-    // }
-    // );
-
-};
+}
 
 // When module gets deleted
 instance.prototype.destroy = function () {
@@ -184,42 +165,6 @@ instance.prototype.destroy = function () {
 
 instance.prototype.actions = function (system) {
     var self = this;
-    var s;
-
-    self.allLightslist = [];
-    if (self.lights !== undefined) {
-        for (s in self.lights) {
-            self.allLightslist.push({id: s, label: s});
-        }
-    }
-
-    self.allRomslist = [];
-    if (self.rooms !== undefined) {
-        for (s in self.rooms) {
-            self.allRomslist.push({id: s, label: s});
-        }
-    }
-
-    self.allZoneslist = [];
-    if (self.zones !== undefined) {
-        for (s in self.zones) {
-            self.allZoneslist.push({id: s, label: s});
-        }
-    }
-
-    self.allGroupslist = [];
-    if (self.groups !== undefined) {
-        for (s in self.groups) {
-            self.allGroupslist.push({id: s, label: s});
-        }
-    }
-
-    self.allSceneslist = [];
-    if (self.scenes !== undefined) {
-        for (s in self.scenes) {
-            self.allSceneslist.push({id: s, label: s});
-        }
-    }
 
     self.system.emit('instance_actions', self.id, {
         'All_Scenes': {
@@ -230,7 +175,10 @@ instance.prototype.actions = function (system) {
                     label: 'Scenes',
                     id: 'Scenes',
                     default: "Chose Scenes",
-                    choices: self.allSceneslist
+                    choices: self.scenes.map((scene) => ({
+                        id: scene.id,
+                        label: scene.name
+                    }))
                 }
             ]
         },
@@ -242,7 +190,10 @@ instance.prototype.actions = function (system) {
                     label: 'Lamps',
                     id: 'Lamps',
                     default: "Chose Lamp",
-                    choices: self.allLightslist
+                    choices: self.lights.map((light) => ({
+                        id: light.id,
+                        label: light.name
+                    }))
                 },
                 {
                     type: 'dropdown',
@@ -261,7 +212,10 @@ instance.prototype.actions = function (system) {
                     label: 'Lamps',
                     id: 'Lamps',
                     default: "Chose Lamp",
-                    choices: self.allLightslist
+                    choices: self.lights.map((light) => ({
+                        id: light.id,
+                        label: light.name
+                    }))
                 },
                 {
                     type: 'dropdown',
@@ -290,7 +244,10 @@ instance.prototype.actions = function (system) {
                     label: 'Rooms',
                     id: 'Rooms',
                     default: "Chose Rooms",
-                    choices: self.allRomslist
+                    choices: self.rooms.map((room) => ({
+                        id: room.id,
+                        label: room.name
+                    }))
                 },
                 {
                     type: 'dropdown',
@@ -309,7 +266,10 @@ instance.prototype.actions = function (system) {
                     label: 'Rooms',
                     id: 'Rooms',
                     default: "Chose Rooms",
-                    choices: self.allRomslist
+                    choices: self.rooms.map((room) => ({
+                        id: room.id,
+                        label: room.name
+                    }))
                 },
                 {
                     type: 'dropdown',
@@ -338,7 +298,10 @@ instance.prototype.actions = function (system) {
                     label: 'LightGroup',
                     id: 'LightGroup',
                     default: "Chose LightGroup",
-                    choices: self.allGroupslist
+                    choices: self.lightGroups.map((group) => ({
+                        id: group.id,
+                        label: group.name
+                    }))
                 },
                 {
                     type: 'dropdown',
@@ -357,7 +320,10 @@ instance.prototype.actions = function (system) {
                     label: 'LightGroup',
                     id: 'LightGroup',
                     default: "Chose LightGroup",
-                    choices: self.allGroupslist
+                    choices: self.lightGroups.map((group) => ({
+                        id: group.id,
+                        label: group.name
+                    }))
                 },
                 {
                     type: 'dropdown',
@@ -386,7 +352,10 @@ instance.prototype.actions = function (system) {
                     label: 'Zones',
                     id: 'Zones',
                     default: "Chose Zones",
-                    choices: self.allZoneslist
+                    choices: self.zones.map((zone) => ({
+                        id: zone.id,
+                        label: zone.name
+                    }))
                 },
                 {
                     type: 'dropdown',
@@ -405,7 +374,10 @@ instance.prototype.actions = function (system) {
                     label: 'Zones',
                     id: 'Zones',
                     default: "Chose Zones",
-                    choices: self.allZoneslist
+                    choices: self.zones.map((zone) => ({
+                        id: zone.id,
+                        label: zone.name
+                    }))
                 },
                 {
                     type: 'dropdown',
@@ -432,181 +404,42 @@ instance.prototype.actions = function (system) {
 
 instance.prototype.action = function (action) {
     var self = this;
-    var type;
-    var preset;
-    var time;
-    var user = self.config.username
 
-    debug('action: ', action);
+    if (!self.api) {
+        return;
+    }
 
     switch (action.action) {
         case 'All_Scenes':
-            console.log("-----> All_Scenes");
-            var data = self.scenes;
-            // console.log(data);
-            //console.log(action.options);
-            var data2 = action.options.Scenes;
-
-            for (const [key, id] of Object.entries(data)) {
-                if (key == data2) {
-                    SET_SCENES.setScene(user, id);
-                }
-            }
-            ;
-
-
+            self.api.scenes.activateScene(action.options.Scenes);
             break;
         case 'Lamps_Switch':
-            console.log("-----> Lamps_Switch");
-            var data = self.lights;
-            // console.log(data);
-            //console.log(action.options);
-            var data2 = action.options.Lamps;
-            var onoff = action.options["ON/OFF"];
-
-            for (const [key, id] of Object.entries(data)) {
-                if (key == data2) {
-                    SET_LIGHT_STATES.setLight_Switch(user, id, onoff);
-                }
-            }
-            ;
-
-
+            self.api.lights.setLightState(action.options.Lamps, new v3.lightStates.LightState().on(action.options['ON/OFF']));
             break;
         case 'Lamps_Switch_Bri':
-            console.log("-----> Lamps_Switch_Bri");
-            var data = self.lights;
-            // console.log(data);
-            //console.log(action.options);
-            var data2 = action.options.Lamps;
-            var onoff = action.options["ON/OFF"];
-            var bri = action.options["bri"];
-
-            for (const [key, id] of Object.entries(data)) {
-                if (key == data2) {
-                    SET_LIGHT_STATES.setLight_Switch_Bri(user, id, onoff, bri);
-                }
-            }
-            ;
-
-
+            self.api.lights.setLightState(action.options.Lamps,
+                new v3.lightStates.LightState().on(action.options['ON/OFF']).bri(action.options["bri"]));
             break;
         case 'Room_Switch':
-            console.log("-----> Room_Switch");
-            var data = self.rooms;
-            // console.log(data);
-            // console.log(action.options);
-            var data2 = action.options.Rooms;
-            var onoff = action.options["ON/OFF"];
-
-            for (const [key, id] of Object.entries(data)) {
-                if (key == data2) {
-                    SET_GROUPS_STATES.setRoom_Switch(user, id, onoff);
-                }
-            }
-            ;
-
+            self.api.groups.setGroupState(action.options.Rooms, new v3.lightStates.GroupLightState().on(action.options['ON/OFF']));
             break;
         case 'Room_Switch_Bri':
-            console.log("-----> Room_Switch_Bri");
-            var data = self.rooms;
-            // console.log(data);
-            //console.log(action.options);
-            var data2 = action.options.Rooms;
-            var onoff = action.options["ON/OFF"];
-            var bri = action.options["bri"];
-
-            for (const [key, id] of Object.entries(data)) {
-                if (key == data2) {
-                    SET_GROUPS_STATES.setRoom_Switch_Bri(user, id, onoff, bri);
-                }
-            }
-            ;
-
-
+            self.api.groups.setGroupState(action.options.Rooms,
+                new v3.lightStates.GroupLightState().on(action.options['ON/OFF']).bri(action.options["bri"]));
             break;
         case 'LightGroup_Switch':
-            console.log("-----> LightGroup");
-            var data = self.groups;
-            // console.log(data);
-            // console.log(action.options);
-            var data2 = action.options.LightGroup;
-            var onoff = action.options["ON/OFF"];
-
-            for (const [key, id] of Object.entries(data)) {
-                // console.log("loop");
-                // console.log(key);
-                // console.log(data2);
-                // console.log(key == data2);
-                if (key == data2) {
-                    console.log("Inside");
-                    SET_GROUPS_STATES.setLightGroup_Switch(user, id, onoff);
-                }
-            }
-            ;
-
+            self.api.groups.setGroupState(action.options.LightGroup, new v3.lightStates.GroupLightState().on(action.options['ON/OFF']));
             break;
         case 'LightGroup_Switch_Bri':
-            console.log("-----> LightGroup_Switch_Bri");
-            var data = self.groups;
-            // console.log(data);
-            // console.log(action.options);
-            var data2 = action.options.LightGroup;
-            var onoff = action.options["ON/OFF"];
-            var bri = action.options["bri"];
-
-            for (const [key, id] of Object.entries(data)) {
-                // console.log("loop");
-                // console.log(key);
-                // console.log(data2);
-                // console.log(key == data2);
-                if (key == data2) {
-                    SET_GROUPS_STATES.setLightGroup_Switch_Bri(user, id, onoff, bri);
-                }
-            }
-            ;
-
-
+            self.api.groups.setGroupState(action.options.LightGroup,
+                new v3.lightStates.GroupLightState().on(action.options['ON/OFF']).bri(action.options["bri"]));
             break;
         case 'Zones_Switch':
-            console.log("-----> Zones_Switch");
-            var data = self.zones;
-            // console.log(data);
-            // console.log(action.options);
-            var data2 = action.options.Zones;
-            var onoff = action.options["ON/OFF"];
-
-            for (const [key, id] of Object.entries(data)) {
-                // console.log("loop");
-                // console.log(key);
-                // console.log(data2);
-                // console.log(key == data2);
-                if (key == data2) {
-                    console.log("Inside");
-                    SET_GROUPS_STATES.setZone_Switch(user, id, onoff);
-                }
-            }
-            ;
+            self.api.groups.setGroupState(action.options.Zones, new v3.lightStates.GroupLightState().on(action.options['ON/OFF']));
             break;
         case 'Zones_Switch_Bri':
-            console.log("-----> Zones_Switch_Bri");
-            var data = self.zones;
-            // console.log(data);
-            // console.log(action.options);
-            var data2 = action.options.Zones;
-            var onoff = action.options["ON/OFF"];
-            var bri = action.options["bri"];
-
-            for (const [key, id] of Object.entries(data)) {
-                // console.log("loop");
-                // console.log(key);
-                // console.log(data2);
-                // console.log(key == data2);
-                if (key == data2) {
-                    SET_GROUPS_STATES.setZone_Switch_Bri(user, id, onoff, bri);
-                }
-            }
-            ;
+            self.api.groups.setGroupState(action.options.Zones,
+                new v3.lightStates.GroupLightState().on(action.options['ON/OFF']).bri(action.options["bri"]));
             break;
     }
 };
