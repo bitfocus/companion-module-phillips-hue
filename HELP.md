@@ -1,30 +1,29 @@
-## companion-module-phillips-hue
+## Philips Hue
 
-This module will allow you to control Philips-hue lights.
+This module will allow you to connect to your Philips Hue bridge and control your lights.
 
 ### Configuration
-  1. If you don't have a Hue Bridge Username that lookings something like this (xH8d29uzrAMxEjYQ8Lk4rMq8tli6coL3m50aRAJo) you need to create that.
-  2. Check the CreateUser checkbox.
-  3. Press on the big sync button on top of your hur bridge.
-  4. Press "Apply Changes" button on Companion config page.
-  5. In the LOG Info Section of Companion there should be a new username created. Copy that and pasted to the username part on the Companion config page.
-
-### KNOW BUGS
-  1. Needs a restart of companion after entering the username and pressing Apply changes.
-  2. Some users experiane problem while creating a user. If you're not able to use the create user function Philips have a guide here how to create one. https://developers.meethue.com/develop/get-started-2/ 
+1. Select your Hue bridge from the list or enter the IP address manually (bridges are discovered in the background). 
+2. Either [manually create](https://developers.meethue.com/develop/get-started-2/) a bridge user or use the "**Create new User**" checkbox.
+3. Creating a user:
+   - Check the "**Create new User**" checkbox.
+   - Press on the big sync button on top of your Hue bridge.
+   - Press "**Apply Changes**" button on Companion config page.
+   - The new user will be created in the background and the configuration will update automatically. Check the log for errors.
 
 ### Available actions
-1. All_Scenes - Lets you chose which scen to trigger. OBS! All scen from are in this list
-2. Lamps_Switch -  Lets you turn on or off a specifig light
-3. Lamps_Switch_Bri - Lets you turn on or off a specifig light and also set the brightness
-4. Room_Switch - Lets you turn on or off a specifig room
-5. Room_Switch_Bri - Lets you turn on or off a specifig room and also set the brightness
-6. LightGroup_Switch - Lets you turn on or off a specifig lightgroup
-7. LightGroup_Switch_Bri - Lets you turn on or off a specifig lightgroup and also set the brightness
-8. Zones_Switch - Lets you turn on or off a specifig zone
-9. Zones_Switch_Bri - Lets you turn on or off a specifig zone and also set the brightness
 
-### Delete users
-1. https://account.meethue.com/apps - can only be done thrue meethue website
+| Action                | What it does                                                             |
+|-----------------------|--------------------------------------------------------------------------|
+| All_Scenes            | Trigger a scene                                                          |
+| Lamps_Switch          | Switch lamp on or off                                                    |
+| Lamps_Switch_Bri      | Switch lamp on or off and also set the brightness                        |
+| Room_Switch           | Turn all lights in a room on or off                                      |
+| Room_Switch_Bri       | Turn all lights in a room on or off and also set the brightness          |
+| LightGroup_Switch     | Turn all lights in a group on or off                                     |
+| LightGroup_Switch_Bri | Turn all lights in a group on or off and also set the brightness         |
+| Zones_Switch          | Turn all lights in a specific zone on or off                             |
+| Zones_Switch_Bri      | Turn all lights in a specific zone on or off and also set the brightness |
+
 
 
