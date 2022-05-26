@@ -1,15 +1,15 @@
 {
 	"name": "phillips-hue",
-	"version": "0.0.6",
+	"version": "0.1.0",
 	"api_version": "1.0.0",
 	"keywords": [
 		"Philips",
 		"philips-hue"
 	],
 	"manufacturer": "Philips",
-	"product": "philips-hue",
+	"product": "Philips Hue",
 	"shortname": "philips-hue",
-	"description": "philips-hue plugin for Companion",
+	"description": "Philips Hue module for Companion",
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
