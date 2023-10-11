@@ -23,12 +23,12 @@ class ModuleInstance extends InstanceBase {
 		if (this.discoveredBridges.length === 0) {
 			this.discoverBridges();
 		}
-		
-		// FIXME: remove this here
-		if (this.config.createuser) {
+
+		// FIXME: this does not belong here
+		if (this.config.createuser && this.config.username === '') {
 			this.createUser();
 		}
-
+		
 		this.updateStatus(InstanceStatus.Connecting);
 
 		if (this.config.ip && this.config.username) {
@@ -61,7 +61,6 @@ class ModuleInstance extends InstanceBase {
 
 		// FIXME: why is this never called?
 		console.log("configUpdated");
-		this.updateStatus(InstanceStatus.ConnectionFailure, 'Unable to connect to bridge');
 
 		if (this.config.createuser) {
 			this.createUser();
@@ -100,14 +99,13 @@ class ModuleInstance extends InstanceBase {
 	}
 
 	async discoverBridges() {
-		console.log("magic2");
-	
 		this.discoveredBridges = []
 		v3.discovery.upnpSearch().then((results) => {
 			console.log(JSON.stringify(results, null, 2));
 			results.forEach((bridge) => {
 				this.discoveredBridges.push(bridge)
 			})
+			// TODO: how to update current config field
 		});
 	}
 
