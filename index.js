@@ -18,30 +18,28 @@ class ModuleInstance extends InstanceBase {
 	}
 
 	async init(config) {
-		this.config = config
+		this.config = config;
+		this.updateStatus(InstanceStatus.Connecting);
 
 		if (this.discoveredBridges.length === 0) {
 			this.discoverBridges();
 		}
 
 		// FIXME: this does not belong here
-		if (this.config.createuser && this.config.username === '') {
+		if (this.config.createuser) {
 			this.createUser();
 		}
-		
-		this.updateStatus(InstanceStatus.Connecting);
 
 		if (this.config.ip && this.config.username) {
 			v3.api.createLocal(this.config.ip).connect(this.config.username).then((api) => {
 				// check if api is working correctly
 				api.users.getUserByName(this.config.username).then(() => {
-
 					// create local api instance and update all parameters
 					this.api = api;
 					this.updateParams();
 				}).catch(err => {
 					this.log('error', 'Unable to use API: ' + err.message);
-					this.updateStatus(InstanceStatus.ConnectionFailure, 'Invalid user name')
+					this.updateStatus(InstanceStatus.BadConfig, 'Invalid user name');
 				})
 			}).catch(err => {
 				this.log('error', "Unable to connect: " + err.message);
@@ -66,7 +64,7 @@ class ModuleInstance extends InstanceBase {
 			this.createUser();
 		}
 
-		this.init();
+		this.init(this.config);
 	}
 
 	// Return config fields for web config
@@ -83,17 +81,20 @@ class ModuleInstance extends InstanceBase {
 					label: bridge.name,
 				})),
 				regex: Regex.IP,
+				tooltip: "Manually enter bridge IP, or select discovered bridge from the list.\nDiscovering the bridge takes some time (maybe refresh the page)..."
 			},
 			{
 				type: 'textinput',
 				id: 'username',
 				label: 'Bridge User',
+				tooltip: 'Enter user name, or let the "Create new user" option fill this field'
 			},
 			{
 				type: 'checkbox',
-				label: 'Create new User',
+				label: 'Create new user',
 				id: 'createuser',
 				default: false,
+				tooltip: 'Press the sync button on your hue bridge before selecting this'
 			}
 		]
 	}
@@ -101,21 +102,19 @@ class ModuleInstance extends InstanceBase {
 	async discoverBridges() {
 		this.discoveredBridges = []
 		v3.discovery.upnpSearch().then((results) => {
-			console.log(JSON.stringify(results, null, 2));
 			results.forEach((bridge) => {
-				this.discoveredBridges.push(bridge)
+				this.discoveredBridges.push(bridge);
 			})
 			// TODO: how to update current config field
 		});
 	}
 
 	async createUser() {
-		console.log("createuser");
 		if (!this.config.ip) {
+			this.updateStatus(InstanceStatus.BadConfig, "Missing bridge IP");
 			return;
 		}
 	
-		console.log("createuser2");
 		const APPLICATION_NAME = 'node-hue-api', DEVICE_NAME = 'companion';
 	
 		v3.api.createLocal(this.config.ip).connect()
@@ -123,17 +122,19 @@ class ModuleInstance extends InstanceBase {
 				return api.users.createUser(APPLICATION_NAME, DEVICE_NAME);
 			})
 			.then(createdUser => {
-				console.log(createdUser);
+				console.log('createdUser: ' + createdUser);
 				this.config.username = createdUser.username;
 				this.config.createuser = false;
-				this.saveConfig();
+				this.saveConfig(this.config);
+				this.init(this.config);
 			})
 			.catch(err => {
 				if (err.getHueErrorType && err.getHueErrorType() === 101) {
 					this.log('error', "You need to press the Link Button on the bridge first");
+					this.updateStatus(InstanceStatus.ConnectionFailure, "You need to press the Link Button on the bridge first");
 				} else {
-					this.debug(`Unexpected Error: ${err}`);
 					this.log('error', "Unexpected Error: " + err.message);
+					this.updateStatus(InstanceStatus.UnknownError);
 				}
 			})
 	};
