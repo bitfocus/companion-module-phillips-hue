@@ -15,19 +15,19 @@ bottleneck@^2.19.5:
   integrity sha512-VHiNCbI1lKdl44tGrhNfU3lup0Tj/ZBMJB5/2ZbNXRCPuRCO7ed2mgcK4r17y+KB2EfuYuRaVlwNbAeaWGSpbw==
 
 follow-redirects@^1.10.0:
-  version "1.13.2"
-  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.13.2.tgz#dd73c8effc12728ba5cf4259d760ea5fb83e3147"
-  integrity sha512-6mPTgLxYm3r6Bkkg0vNM0HTjfGrOEtsfbhagQvbxDEsEkpNhw582upBaoRZylzen6krEmxXJgt9Ju6HiI4O7BA==
+  version "1.15.4"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.4.tgz#cdc7d308bf6493126b17ea2191ea0ccf3e535adf"
+  integrity sha512-Cr4D/5wlrb0z9dgERpUL3LrmPKVDsETIJhaCMeDfuFYcqa5bldGV6wBsAN6X/vxlXQtFBMrXdXxdL8CbDTGniw==
 
 get-ssl-certificate@^2.3.3:
   version "2.3.3"
   resolved "https://registry.yarnpkg.com/get-ssl-certificate/-/get-ssl-certificate-2.3.3.tgz#c8a43da1c77969b2a1dabe8f8356a7d60cf0c4b5"
   integrity sha512-aKYXS1S5+2IYw4W5+lKC/M+lvaNYPe0PhnQ144NWARcBg35H3ZvyVZ6y0LNGtiAxggFBHeO7LaVGO4bgHK4g1Q==
 
-node-hue-api@^4.0.9:
-  version "4.0.10"
-  resolved "https://registry.yarnpkg.com/node-hue-api/-/node-hue-api-4.0.10.tgz#739b0c0f24a29887f3ff1a42037f4f37bc5c2327"
-  integrity sha512-s+UvFttQfNXFadk8p6N9q9A5hteY2Q48W/mVze9nFPR5gwPH374cdA61ezKOx1WgBrN4btHj1z81veznhEZZAA==
+node-hue-api@^4.0.11:
+  version "4.0.11"
+  resolved "https://registry.yarnpkg.com/node-hue-api/-/node-hue-api-4.0.11.tgz#7bc594ac5f8f80a7e77900a81ed6402941772836"
+  integrity sha512-lpnDdMjLTmm00JRsU70Mtm0Ix03cf7PRjKQAJbSg/Y0ChiIKQs+oDbSUpW2aDhEbor+wKpyfLYLGLTrjlG24pQ==
   dependencies:
     axios "^0.21.1"
     bottleneck "^2.19.5"
