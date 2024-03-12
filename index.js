@@ -25,11 +25,6 @@ class ModuleInstance extends InstanceBase {
 			this.discoverBridges();
 		}
 
-		// FIXME: this does not belong here
-		if (this.config.createuser) {
-			this.createUser();
-		}
-
 		if (this.config.ip && this.config.username) {
 			v3.api.createLocal(this.config.ip).connect(this.config.username).then((api) => {
 				// check if api is working correctly
@@ -49,16 +44,16 @@ class ModuleInstance extends InstanceBase {
 
 		this.updateActions() // export actions
 	}
+
 	// When module gets deleted
 	async destroy() {
-		this.log('debug', 'destroy')
+		if (this.api) {
+			delete this.api;
+		}
 	}
 
 	async configUpdated(config) {
 		this.config = config;
-
-		// FIXME: why is this never called?
-		console.log("configUpdated");
 
 		if (this.config.createuser) {
 			this.createUser();

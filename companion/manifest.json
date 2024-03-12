@@ -1,9 +1,9 @@
 {
-	"id": "phillips-hue",
+	"id": "philips-hue",
 	"name": "philips-hue",
 	"shortname": "hue",
 	"description": "Philips Hue module for Companion",
-	"version": "0.2.0",
+	"version": "1.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-phillips-hue.git",
 	"bugs": "https://github.com/bitfocus/companion-module-phillips-hue/issues",
@@ -16,10 +16,10 @@
 	"runtime": {
 		"type": "node18",
 		"api": "nodejs-ipc",
-		"apiVersion": "1.0.0",
+		"apiVersion": "0.0.0",
 		"entrypoint": "../index.js"
 	},
-	"legacyIds": [],
+	"legacyIds": ["phillips-hue"],
 	"manufacturer": "Philips",
 	"products": [
 		"Philips Hue"
