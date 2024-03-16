@@ -1,6 +1,7 @@
 const { InstanceBase, Regex, runEntrypoint, InstanceStatus } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades')
 const UpdateActions = require('./actions')
+const UpdateFeedbacks = require('./feedbacks')
 
 const v3 = require('node-hue-api').v3
 
@@ -32,6 +33,16 @@ class ModuleInstance extends InstanceBase {
 					// create local api instance and update all parameters
 					this.api = api;
 					this.updateParams();
+
+					// Ensure existing timer is cleared
+					if (this.pollingTimer) {
+						clearInterval(this.pollingTimer);
+						delete this.pollingTimer;
+					}
+
+					this.pollingTimer = setInterval(() => {
+						this.updateParams();
+					}, this.config.interval);
 				}).catch(err => {
 					this.log('error', 'Unable to use API: ' + err.message);
 					this.updateStatus(InstanceStatus.BadConfig, 'Invalid user name');
@@ -42,13 +53,18 @@ class ModuleInstance extends InstanceBase {
 			})
 		}
 
-		this.updateActions() // export actions
+		this.updateDefinitions();
 	}
 
 	// When module gets deleted
 	async destroy() {
 		if (this.api) {
 			delete this.api;
+		}
+
+		if (this.pollingTimer) {
+			clearInterval(this.pollingTimer);
+			delete this.pollingTimer;
 		}
 	}
 
@@ -90,6 +106,14 @@ class ModuleInstance extends InstanceBase {
 				id: 'createuser',
 				default: false,
 				tooltip: 'Press the sync button on your hue bridge before selecting this'
+			},
+			{
+				type: 'number',
+				label: 'Poll interval (ms)',
+				id: 'interval',
+				default: 500,
+				min: 200,
+				tooltip: 'API calls to hue bridge are limited to max 10 per second'
 			}
 		]
 	}
@@ -139,47 +163,89 @@ class ModuleInstance extends InstanceBase {
 			return
 		}
 	
-		this.lights = [];
 		this.api.lights.getAll().then((lights) => {
+			var paramsChanged = false;
+			if (this.lights.length != lights.length) {
+				paramsChanged = true;
+			}
+
+			// update lights
 			this.lights = lights;
-			this.updateActions();
+
+			// update only if something changed
+			if (paramsChanged) {
+				this.updateDefinitions();
+			}
+			
+			this.checkFeedbacks('light');
 		});
 	
-		this.rooms = [];
-		this.zones = [];
-		this.lightGroups = [];
 		this.api.groups.getAll().then((groups) => {
+			var rooms = [];
+			var zones = [];
+			var lightGroups = [];
+
 			groups.forEach((group) => {
 				switch (group.type) {
 					case 'Room':
-						this.rooms.push(group);
+						rooms.push(group);
 						break;
 					case 'Zone':
-						this.zones.push(group);
+						zones.push(group);
 						break;
 					case 'LightGroup':
-						this.lightGroups.push(group);
+						lightGroups.push(group);
 						break;
 				}
-			})
+			});
+
+			var paramsChanged = false;
+			if (this.rooms.length != rooms.length) {
+				paramsChanged = true;
+			}
+			this.rooms = rooms;
+			if (this.zones.length != zones.length) {
+				paramsChanged = true;
+			}
+			this.zones = zones;
+			if (this.lightGroups.length != lightGroups.length) {
+				paramsChanged = true;
+			} 
+			this.lightGroups = lightGroups;
 	
-			this.updateActions();
+			// update only if something changed
+			if (paramsChanged) {
+				this.updateDefinitions();
+			}
+
+			this.checkFeedbacks('room');
+			this.checkFeedbacks('zone');
+			this.checkFeedbacks('group');
 		});
 	
-		this.scenes = [];
 		this.api.scenes.getAll().then((scenes) => {
-			scenes.forEach((scene) => {
-				this.scenes.push(scene);
-			})
+			var paramsChanged = false;
+			if (this.scenes.length != scenes.length) {
+				paramsChanged = true;
+			}
 	
-			this.updateActions();
+			// update lights
+			this.scenes = scenes;
+
+			// update only if something changed
+			if (paramsChanged) {
+				this.updateDefinitions();
+			}
+			
+			this.checkFeedbacks('scene');
 		});
 	
 		this.updateStatus(InstanceStatus.Ok);
 	}
 
-	updateActions() {
-		UpdateActions(this)
+	updateDefinitions() {
+		UpdateActions(this);
+		UpdateFeedbacks(this);
 	}
 }
 

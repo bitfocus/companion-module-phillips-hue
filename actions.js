@@ -32,7 +32,7 @@ const brightness = {
 module.exports = function (self) {
     self.setActionDefinitions({
         scenes: {
-            name: 'Scenes',
+            name: 'Scene',
             options: [
                 {
                     id: 'scene',
@@ -54,7 +54,7 @@ module.exports = function (self) {
             },
         },
         lights: {
-            name: 'Lights',
+            name: 'Light',
             options: [
                 {
                     id: 'light',
@@ -74,13 +74,15 @@ module.exports = function (self) {
                 if (!self.api) {
                     return;
                 }
-                
+
+                var state = new v3.lightStates.LightState().on(event.options.state);
                 if (event.options.setBrightness) {
-                    self.api.lights.setLightState(event.options.light, new v3.lightStates.LightState().on(event.options.state).bri(event.options.brightness));
+                    state.bri(event.options.brightness);
                 }
-                else {
-                    self.api.lights.setLightState(event.options.light, new v3.lightStates.LightState().on(event.options.state));
-                }
+
+                self.api.lights.setLightState(event.options.light, state).then((result) => {
+                    self.checkFeedbacks('light');
+                });
             },
             learn: async (action) => {
                 if (!self.api || action.options.light === 'Select light') {
@@ -97,7 +99,7 @@ module.exports = function (self) {
             },
         },
         rooms: {
-            name: 'Rooms',
+            name: 'Room',
             options: [
                 {
                     id: 'room',
@@ -110,7 +112,7 @@ module.exports = function (self) {
                         label: room.name
                     }))
                 },
-                state, 
+                state,
                 setBrightness,
                 brightness,
             ],
@@ -119,11 +121,18 @@ module.exports = function (self) {
                     return;
                 }
 
-                self.api.groups.setGroupState(event.options.room, new v3.lightStates.GroupLightState().on(event.options['state']).bri(event.options["brightness"]));
+                var state = new v3.lightStates.GroupLightState().on(event.options.state);
+                if (event.options.setBrightness) {
+                    state.bri(event.options.brightness);
+                }
+
+                self.api.groups.setGroupState(event.options.room, state).then((result) => {
+                    self.checkFeedbacks('room');
+                });
             },
         },
         groups: {
-            name: 'Groups',
+            name: 'Group',
             options: [
                 {
                     id: 'group',
@@ -145,11 +154,18 @@ module.exports = function (self) {
                     return;
                 }
 
-                self.api.groups.setGroupState(event.options.group, new v3.lightStates.GroupLightState().on(event.options['state']).bri(event.options["brightness"]));
+                var state = new v3.lightStates.GroupLightState().on(event.options.state);
+                if (event.options.setBrightness) {
+                    state.bri(event.options.brightness);
+                }
+
+                self.api.groups.setGroupState(event.options.group, state).then((result) => {
+                    self.checkFeedbacks('group');
+                });
             },
         },
         zones: {
-            name: 'Zones',
+            name: 'Zone',
             options: [
                 {
                     id: 'zone',
@@ -171,7 +187,14 @@ module.exports = function (self) {
                     return;
                 }
 
-                self.api.groups.setGroupState(event.options.zone, new v3.lightStates.GroupLightState().on(event.options['state']).bri(event.options["brightness"]));
+                var state = new v3.lightStates.GroupLightState().on(event.options.state);
+                if (event.options.setBrightness) {
+                    state.bri(event.options.brightness);
+                }
+
+                self.api.groups.setGroupState(event.options.zone, state).then((result) => {
+                    self.checkFeedbacks('zone');
+                });
             },
         },
     })
