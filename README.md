@@ -1,2 +1,3 @@
-# companion-module-phillips-hue
-See HELP.md and LICENSE
+# companion-module-[replace with module name]
+
+See [HELP.md](./companion/HELP.md) and [LICENSE](./LICENSE)

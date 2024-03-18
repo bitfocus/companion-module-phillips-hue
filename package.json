@@ -1,30 +1,21 @@
 {
-	"name": "phillips-hue",
-	"version": "0.1.0",
-	"api_version": "1.0.0",
-	"keywords": [
-		"Philips",
-		"philips-hue"
-	],
-	"manufacturer": "Philips",
-	"product": "Philips Hue",
-	"shortname": "philips-hue",
-	"description": "Philips Hue module for Companion",
+	"name": "philips-hue",
+	"version": "1.0.0",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"format": "prettier -w ."
 	},
-	"author": "Mathias Halén <matte_halen@hotmail.com>",
 	"license": "MIT",
-	"dependencies": {
-		"node-hue-api": "^4.0.11"
-	},
-	"homepage": "https://github.com/bitfocus/companion-module-phillips-hue#readme",
-	"bugs": {
-		"url": "https://github.com/bitfocus/companion-module-phillips-hue/issues"
-	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/bitfocus/companion-module-phillips-hue.git"
-	}
+	},
+	"dependencies": {
+		"@companion-module/base": "~1.4.0",
+		"node-hue-api": "^4.0.11"
+	},
+	"devDependencies": {
+		"@companion-module/tools": "^1.2.0"
+	},
+	"prettier": "@companion-module/tools/.prettierrc.json"
 }
