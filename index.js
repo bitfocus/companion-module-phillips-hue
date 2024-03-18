@@ -2,6 +2,8 @@ const { InstanceBase, Regex, runEntrypoint, InstanceStatus } = require('@compani
 const UpgradeScripts = require('./upgrades')
 const UpdateActions = require('./actions')
 const UpdateFeedbacks = require('./feedbacks')
+const { buildPresets } = require('./presets.js')
+const { buildVariables } = require('./variables.js')
 
 const v3 = require('node-hue-api').v3
 
@@ -246,6 +248,9 @@ class ModuleInstance extends InstanceBase {
 	updateDefinitions() {
 		UpdateActions(this);
 		UpdateFeedbacks(this);
+
+		buildPresets(this);
+		buildVariables(this);
 	}
 }
 

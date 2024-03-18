@@ -53,7 +53,7 @@ module.exports = function (self) {
                 self.api.scenes.activateScene(event.options.scene);
             },
         },
-        lights: {
+        light: {
             name: 'Light',
             options: [
                 {
@@ -98,7 +98,7 @@ module.exports = function (self) {
                 }
             },
         },
-        rooms: {
+        room: {
             name: 'Room',
             options: [
                 {
@@ -131,7 +131,7 @@ module.exports = function (self) {
                 });
             },
         },
-        groups: {
+        group: {
             name: 'Group',
             options: [
                 {
@@ -164,7 +164,7 @@ module.exports = function (self) {
                 });
             },
         },
-        zones: {
+        zone: {
             name: 'Zone',
             options: [
                 {
