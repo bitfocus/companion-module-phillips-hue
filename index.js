@@ -143,7 +143,7 @@ class ModuleInstance extends InstanceBase {
 				return api.users.createUser(APPLICATION_NAME, DEVICE_NAME);
 			})
 			.then(createdUser => {
-				self.log('info', 'createdUser: ' + createdUser);
+				this.log('info', 'createdUser: ' + createdUser);
 				this.config.username = createdUser.username;
 				this.config.createuser = false;
 				this.saveConfig(this.config);

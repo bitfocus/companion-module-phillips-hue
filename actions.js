@@ -5,7 +5,7 @@ const state = {
     type: 'dropdown',
     label: 'State',
     default: true,
-    choices: [{ id: true, label: 'On' }, { id: false, label: 'Off' }]
+    choices: [{ id: true, label: 'On' }, { id: false, label: 'Off' }, { id: 'toggle', label: 'Toggle' }]
 };
 
 const setBrightness = {
@@ -28,6 +28,24 @@ const brightness = {
     range: true,
     isVisible: (config) => config.state === true && config.setBrightness === true,
 };
+
+function getLightState(elements, options, type) {
+    var state = options.state;
+
+    if (state === 'toggle') {
+        const element = elements.find((element) => element.id == options[type]);
+        if (element) {
+            if ('on' in element.state) {
+                state = !element.state.on;
+            }
+            else if ('any_on' in element.state) {
+                state = !element.state.any_on;
+            }
+        }
+    }
+
+    return state;
+}
 
 module.exports = function (self) {
     self.setActionDefinitions({
@@ -75,12 +93,12 @@ module.exports = function (self) {
                     return;
                 }
 
-                var state = new v3.lightStates.LightState().on(event.options.state);
+                var lightState = new v3.lightStates.LightState().on(getLightState(self.lights, event.options, 'light'));
                 if (event.options.setBrightness) {
-                    state.bri(event.options.brightness);
+                    lightState.bri(event.options.brightness);
                 }
 
-                self.api.lights.setLightState(event.options.light, state).then((result) => {
+                self.api.lights.setLightState(event.options.light, lightState).then((result) => {
                     self.checkFeedbacks('light');
                 });
             },
@@ -121,12 +139,12 @@ module.exports = function (self) {
                     return;
                 }
 
-                var state = new v3.lightStates.GroupLightState().on(event.options.state);
+                var lightState = new v3.lightStates.GroupLightState().on(getLightState(self.rooms, event.options, 'room'));
                 if (event.options.setBrightness) {
-                    state.bri(event.options.brightness);
+                    lightState.bri(event.options.brightness);
                 }
 
-                self.api.groups.setGroupState(event.options.room, state).then((result) => {
+                self.api.groups.setGroupState(event.options.room, lightState).then((result) => {
                     self.checkFeedbacks('room');
                 });
             },
@@ -154,12 +172,12 @@ module.exports = function (self) {
                     return;
                 }
 
-                var state = new v3.lightStates.GroupLightState().on(event.options.state);
+                var lightState = new v3.lightStates.GroupLightState().on(getLightState(self.groups, event.options));
                 if (event.options.setBrightness) {
-                    state.bri(event.options.brightness);
+                    lightState.bri(event.options.brightness);
                 }
 
-                self.api.groups.setGroupState(event.options.group, state).then((result) => {
+                self.api.groups.setGroupState(event.options.group, lightState).then((result) => {
                     self.checkFeedbacks('group');
                 });
             },
@@ -187,12 +205,12 @@ module.exports = function (self) {
                     return;
                 }
 
-                var state = new v3.lightStates.GroupLightState().on(event.options.state);
+                var lightState = new v3.lightStates.GroupLightState().on(getLightState(self.zones, event.options));
                 if (event.options.setBrightness) {
-                    state.bri(event.options.brightness);
+                    lightState.bri(event.options.brightness);
                 }
 
-                self.api.groups.setGroupState(event.options.zone, state).then((result) => {
+                self.api.groups.setGroupState(event.options.zone, lightState).then((result) => {
                     self.checkFeedbacks('zone');
                 });
             },
