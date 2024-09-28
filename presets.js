@@ -79,6 +79,34 @@ function buildPresets(self) {
         }
     });
 
+    self.scenes.forEach((scene) => {
+        presets[`scene_${scene.id}`] = {
+            type: 'button',
+            category: 'Scene',
+            name: scene.name,
+            style: {
+                text: `$(hue:scene_${scene.id})`,
+                size: 'auto',
+                color: combineRgb(255, 255, 255),
+                bgcolor: combineRgb(0, 0, 0),
+            },
+            steps: [
+                {
+                    down: [
+                        {
+                            actionId: 'scene',
+                            options: {
+                                scene: scene.id,
+                                state: true,
+                            },
+                        },
+                    ],
+                    up: [],
+                },
+            ],
+        }
+    });
+
     self.setPresetDefinitions(presets)
 }
 

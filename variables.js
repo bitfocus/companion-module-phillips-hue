@@ -18,6 +18,14 @@ function buildVariables(self) {
         values[`room_${room.id}`] = room.name;
     });
 
+    self.scenes.forEach((scene) => {
+        variables.push({
+            variableId: `scene_${scene.id}`,
+            name: `Scene ${scene.name}`,
+        });
+        values[`scene_${scene.id}`] = scene.name;
+    });
+
     self.setVariableDefinitions(variables);
     self.setVariableValues(values);
 }
