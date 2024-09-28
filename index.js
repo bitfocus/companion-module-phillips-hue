@@ -1,497 +1,257 @@
-var instance_skel = require('../../instance_skel');
+const { InstanceBase, Regex, runEntrypoint, InstanceStatus } = require('@companion-module/base')
+const UpgradeScripts = require('./upgrades')
+const UpdateActions = require('./actions')
+const UpdateFeedbacks = require('./feedbacks')
+const { buildPresets } = require('./presets.js')
+const { buildVariables } = require('./variables.js')
 
 const v3 = require('node-hue-api').v3
 
-var debug;
-var log;
+class ModuleInstance extends InstanceBase {
+	constructor(internal) {
+		super(internal)
 
-function instance(system, id, config) {
-    var self = this;
+		// create empty lists
+		this.discoveredBridges = [];
+		this.lights = [];
+		this.rooms = [];
+		this.zones = [];
+		this.lightGroups = [];
+		this.scenes = [];
+	}
 
-    // super-constructor
-    instance_skel.apply(this, arguments);
+	async init(config) {
+		this.config = config;
+		this.updateStatus(InstanceStatus.Connecting);
 
-    // create empty lists
-    self.discoveredBridges = [];
-    self.lights = [];
-    self.rooms = [];
-    self.zones = [];
-    self.lightGroups = [];
-    self.scenes = [];
+		if (this.discoveredBridges.length === 0) {
+			this.discoverBridges();
+		}
 
-    self.actions(); // export actions
+		if (this.config.ip && this.config.username) {
+			v3.api.createLocal(this.config.ip).connect(this.config.username).then((api) => {
+				// check if api is working correctly
+				api.users.getUserByName(this.config.username).then(() => {
+					// create local api instance and update all parameters
+					this.api = api;
+					this.updateParams();
 
-    return self;
+					// Ensure existing timer is cleared
+					if (this.pollingTimer) {
+						clearInterval(this.pollingTimer);
+						delete this.pollingTimer;
+					}
+
+					this.pollingTimer = setInterval(() => {
+						this.updateParams();
+					}, this.config.interval);
+				}).catch(err => {
+					this.log('error', 'Unable to use API: ' + err.message);
+					this.updateStatus(InstanceStatus.BadConfig, 'Invalid user name');
+				})
+			}).catch(err => {
+				this.log('error', "Unable to connect: " + err.message);
+				this.updateStatus(InstanceStatus.ConnectionFailure, 'Unable to connect to bridge');
+			})
+		}
+
+		this.updateDefinitions();
+	}
+
+	// When module gets deleted
+	async destroy() {
+		if (this.api) {
+			delete this.api;
+		}
+
+		if (this.pollingTimer) {
+			clearInterval(this.pollingTimer);
+			delete this.pollingTimer;
+		}
+	}
+
+	async configUpdated(config) {
+		this.config = config;
+
+		if (this.config.createuser) {
+			this.createUser();
+		}
+
+		this.init(this.config);
+	}
+
+	// Return config fields for web config
+	getConfigFields() {
+		return [
+			{
+				type: 'dropdown',
+				id: 'ip',
+				label: 'Bridge Address',
+				default: '',
+				allowCustom: true,
+				choices: this.discoveredBridges.map((bridge) => ({
+					id: bridge.ipaddress,
+					label: bridge.name,
+				})),
+				regex: Regex.IP,
+				tooltip: "Manually enter bridge IP, or select discovered bridge from the list.\nDiscovering the bridge takes some time (maybe refresh the page)..."
+			},
+			{
+				type: 'textinput',
+				id: 'username',
+				label: 'Bridge User',
+				tooltip: 'Enter user name, or let the "Create new user" option fill this field'
+			},
+			{
+				type: 'checkbox',
+				label: 'Create new user',
+				id: 'createuser',
+				default: false,
+				tooltip: 'Press the sync button on your hue bridge before selecting this'
+			},
+			{
+				type: 'number',
+				label: 'Poll interval (ms)',
+				id: 'interval',
+				default: 500,
+				min: 200,
+				tooltip: 'API calls to hue bridge are limited to max 10 per second'
+			}
+		]
+	}
+
+	async discoverBridges() {
+		this.discoveredBridges = []
+		v3.discovery.upnpSearch().then((results) => {
+			results.forEach((bridge) => {
+				this.discoveredBridges.push(bridge);
+			})
+			// TODO: how to update current config field
+		});
+	}
+
+	async createUser() {
+		if (!this.config.ip) {
+			this.updateStatus(InstanceStatus.BadConfig, "Missing bridge IP");
+			return;
+		}
+	
+		const APPLICATION_NAME = 'node-hue-api', DEVICE_NAME = 'companion';
+	
+		v3.api.createLocal(this.config.ip).connect()
+			.then(api => {
+				return api.users.createUser(APPLICATION_NAME, DEVICE_NAME);
+			})
+			.then(createdUser => {
+				this.log('info', 'createdUser: ' + createdUser);
+				this.config.username = createdUser.username;
+				this.config.createuser = false;
+				this.saveConfig(this.config);
+				this.init(this.config);
+			})
+			.catch(err => {
+				if (err.getHueErrorType && err.getHueErrorType() === 101) {
+					this.log('error', "You need to press the Link Button on the bridge first");
+					this.updateStatus(InstanceStatus.ConnectionFailure, "You need to press the Link Button on the bridge first");
+				} else {
+					this.log('error', "Unexpected Error: " + err.message);
+					this.updateStatus(InstanceStatus.UnknownError);
+				}
+			})
+	};
+
+	async updateParams() {
+		if (!this.api) {
+			return
+		}
+	
+		this.api.lights.getAll().then((lights) => {
+			var paramsChanged = false;
+			if (this.lights.length != lights.length) {
+				paramsChanged = true;
+			}
+
+			// update lights
+			this.lights = lights;
+
+			// update only if something changed
+			if (paramsChanged) {
+				this.updateDefinitions();
+			}
+			
+			this.checkFeedbacks('light');
+		});
+	
+		this.api.groups.getAll().then((groups) => {
+			var rooms = [];
+			var zones = [];
+			var lightGroups = [];
+
+			groups.forEach((group) => {
+				switch (group.type) {
+					case 'Room':
+						rooms.push(group);
+						break;
+					case 'Zone':
+						zones.push(group);
+						break;
+					case 'LightGroup':
+						lightGroups.push(group);
+						break;
+				}
+			});
+
+			var paramsChanged = false;
+			if (this.rooms.length != rooms.length) {
+				paramsChanged = true;
+			}
+			this.rooms = rooms;
+			if (this.zones.length != zones.length) {
+				paramsChanged = true;
+			}
+			this.zones = zones;
+			if (this.lightGroups.length != lightGroups.length) {
+				paramsChanged = true;
+			} 
+			this.lightGroups = lightGroups;
+	
+			// update only if something changed
+			if (paramsChanged) {
+				this.updateDefinitions();
+			}
+
+			this.checkFeedbacks('room');
+			this.checkFeedbacks('zone');
+			this.checkFeedbacks('group');
+		});
+	
+		this.api.scenes.getAll().then((scenes) => {
+			var paramsChanged = false;
+			if (this.scenes.length != scenes.length) {
+				paramsChanged = true;
+			}
+	
+			// update lights
+			this.scenes = scenes;
+
+			// update only if something changed
+			if (paramsChanged) {
+				this.updateDefinitions();
+			}
+			
+			this.checkFeedbacks('scene');
+		});
+	
+		this.updateStatus(InstanceStatus.Ok);
+	}
+
+	updateDefinitions() {
+		UpdateActions(this);
+		UpdateFeedbacks(this);
+
+		buildPresets(this);
+		buildVariables(this);
+	}
 }
 
-instance.GetUpgradeScripts = function () {
-    // Example: When this script was committed, a fix needed to be made
-    // this will only be run if you had an instance of an older "version" before.
-    // "version" is calculated out from how many upgradescripts your intance config has run.
-    // So just add a addUpgradeScript when you commit a breaking change to the config, that fixes
-    // the config.
-
-    return [
-        function (context, config) {
-            // just an example, that now cannot be removed/rewritten
-            if (config) {
-                if (config.host !== undefined) {
-                    config.old_host = config.host;
-                }
-            }
-        }
-    ]
-}
-
-instance.prototype.updateConfig = function (config) {
-    var self = this;
-
-    self.config = config;
-
-    if (self.config.createuser) {
-        self.createUser();
-    }
-
-    self.init();
-};
-
-instance.prototype.init = function () {
-    var self = this;
-
-    if (self.discoveredBridges.length === 0) {
-        self.discoverBridges();
-    }
-
-    self.status(self.STATUS_WARNING, 'Syncing');
-
-    if (self.config.ip && self.config.username) {
-        v3.api.createLocal(self.config.ip).connect(self.config.username).then((api) => {
-            // check if api is working correctly
-            api.users.getUserByName(self.config.username).then(() => {
-                // create local api instance and update all parameters
-                self.api = api;
-                self.updateParams();
-            }).catch(err => {
-                self.log('error', 'Unable to use API: ' + err.message);
-                self.status(self.STATUS_ERROR, 'Invalid user name');
-            })
-        }).catch(err => {
-            self.log('error', "Unable to connect: " + err.message);
-            self.status(self.STATUS_ERROR, 'Unable to connect to bridge');
-        })
-    }
-
-    debug = self.debug;
-    log = self.log;
-};
-
-instance.prototype.discoverBridges = function () {
-    var self = this;
-
-    self.discoveredBridges = []
-    v3.discovery.upnpSearch().then((results) => {
-        console.log(JSON.stringify(results, null, 2));
-        results.forEach((bridge) => {
-            self.discoveredBridges.push(bridge)
-        })
-    });
-}
-
-instance.prototype.createUser = function () {
-    var self = this;
-
-    if (!self.config.ip) {
-        return;
-    }
-
-    console.log("createuser");
-    const APPLICATION_NAME = 'node-hue-api', DEVICE_NAME = 'companion';
-
-    v3.api.createLocal(self.config.ip).connect()
-        .then(api => {
-            return api.users.createUser(APPLICATION_NAME, DEVICE_NAME);
-        })
-        .then(createdUser => {
-            console.log(createdUser);
-            self.config.username = createdUser.username;
-            self.config.createuser = false;
-            self.saveConfig();
-        })
-        .catch(err => {
-            if (err.getHueErrorType && err.getHueErrorType() === 101) {
-                self.log('error', "You need to press the Link Button on the bridge first");
-            } else {
-                self.debug(`Unexpected Error: ${err}`);
-                self.log('error', "Unexpected Error: " + err.message);
-            }
-        })
-};
-
-
-instance.prototype.updateParams = function () {
-    var self = this
-
-    if (!self.api) {
-        return
-    }
-
-    self.lights = [];
-    self.api.lights.getAll().then((lights) => {
-        self.lights = lights;
-        self.actions();
-    });
-
-    self.rooms = [];
-    self.zones = [];
-    self.lightGroups = [];
-    self.api.groups.getAll().then((groups) => {
-        groups.forEach((group) => {
-            switch (group.type) {
-                case 'Room':
-                    self.rooms.push(group);
-                    break;
-                case 'Zone':
-                    self.zones.push(group);
-                    break;
-                case 'LightGroup':
-                    self.lightGroups.push(group);
-                    break;
-            }
-        })
-
-        self.actions();
-    });
-
-    self.scenes = [];
-    self.api.scenes.getAll().then((scenes) => {
-        scenes.forEach((scene) => {
-            self.scenes.push(scene);
-        })
-
-        self.actions();
-    });
-
-    self.status(self.STATUS_OK);
-}
-
-// Return config fields for web config
-instance.prototype.config_fields = function () {
-    var self = this
-
-    return [
-        {
-            type: 'dropdown',
-            id: 'ip',
-            label: 'Bridge Address',
-            default: '',
-            allowCustom: true,
-            choices: self.discoveredBridges.map((bridge) => ({
-                id: bridge.ipaddress,
-                label: bridge.name,
-            })),
-            regex: self.REGEX_IP,
-        },
-        {
-            type: 'textinput',
-            id: 'username',
-            label: 'Bridge User',
-            required: true,
-        },
-        {
-            type: 'checkbox',
-            label: 'Create new User',
-            id: 'createuser',
-            default: false,
-        }
-    ]
-}
-
-// When module gets deleted
-instance.prototype.destroy = function () {
-    var self = this;
-    debug("destroy");
-};
-
-instance.prototype.actions = function (system) {
-    var self = this;
-
-    self.system.emit('instance_actions', self.id, {
-        'All_Scenes': {
-            label: 'All_Scenes',
-            options: [
-                {
-                    type: 'dropdown',
-                    label: 'Scenes',
-                    id: 'Scenes',
-                    default: "Chose Scenes",
-                    choices: self.scenes.map((scene) => ({
-                        id: scene.id,
-                        label: scene.name
-                    }))
-                }
-            ]
-        },
-        'Lamps_Switch': {
-            label: 'Lamps_Switch',
-            options: [
-                {
-                    type: 'dropdown',
-                    label: 'Lamps',
-                    id: 'Lamps',
-                    default: "Chose Lamp",
-                    choices: self.lights.map((light) => ({
-                        id: light.id,
-                        label: light.name
-                    }))
-                },
-                {
-                    type: 'dropdown',
-                    label: 'ON/OFF',
-                    id: 'ON/OFF',
-                    default: true,
-                    choices: [{id: true, label: 'ON'}, {id: false, label: 'OFF'}]
-                }
-            ]
-        },
-        'Lamps_Switch_Bri': {
-            label: 'Lamps_Switch_Bri',
-            options: [
-                {
-                    type: 'dropdown',
-                    label: 'Lamps',
-                    id: 'Lamps',
-                    default: "Chose Lamp",
-                    choices: self.lights.map((light) => ({
-                        id: light.id,
-                        label: light.name
-                    }))
-                },
-                {
-                    type: 'dropdown',
-                    label: 'ON/OFF',
-                    id: 'ON/OFF',
-                    default: true,
-                    choices: [{id: true, label: 'ON'}, {id: false, label: 'OFF'}]
-                },
-                {
-                    type: 'number',
-                    label: 'Brightness',
-                    tooltip: 'Sets the Brightness (1-254)',
-                    min: 1,
-                    max: 254,
-                    id: 'bri',
-                    default: 1,
-                    range: false
-                }
-            ]
-        },
-        'Room_Switch': {
-            label: 'Room_Switch',
-            options: [
-                {
-                    type: 'dropdown',
-                    label: 'Rooms',
-                    id: 'Rooms',
-                    default: "Chose Rooms",
-                    choices: self.rooms.map((room) => ({
-                        id: room.id,
-                        label: room.name
-                    }))
-                },
-                {
-                    type: 'dropdown',
-                    label: 'ON/OFF',
-                    id: 'ON/OFF',
-                    default: true,
-                    choices: [{id: true, label: 'ON'}, {id: false, label: 'OFF'}]
-                }
-            ]
-        },
-        'Room_Switch_Bri': {
-            label: 'Room_Switch_Bri',
-            options: [
-                {
-                    type: 'dropdown',
-                    label: 'Rooms',
-                    id: 'Rooms',
-                    default: "Chose Rooms",
-                    choices: self.rooms.map((room) => ({
-                        id: room.id,
-                        label: room.name
-                    }))
-                },
-                {
-                    type: 'dropdown',
-                    label: 'ON/OFF',
-                    id: 'ON/OFF',
-                    default: true,
-                    choices: [{id: true, label: 'ON'}, {id: false, label: 'OFF'}]
-                },
-                {
-                    type: 'number',
-                    label: 'Brightness',
-                    tooltip: 'Sets the Brightness (1-254)',
-                    min: 1,
-                    max: 254,
-                    id: 'bri',
-                    default: 1,
-                    range: false
-                }
-            ]
-        },
-        'LightGroup_Switch': {
-            label: 'LightGroup',
-            options: [
-                {
-                    type: 'dropdown',
-                    label: 'LightGroup',
-                    id: 'LightGroup',
-                    default: "Chose LightGroup",
-                    choices: self.lightGroups.map((group) => ({
-                        id: group.id,
-                        label: group.name
-                    }))
-                },
-                {
-                    type: 'dropdown',
-                    label: 'ON/OFF',
-                    id: 'ON/OFF',
-                    default: true,
-                    choices: [{id: true, label: 'ON'}, {id: false, label: 'OFF'}]
-                }
-            ]
-        },
-        'LightGroup_Switch_Bri': {
-            label: 'LightGroup_Switch_Bri',
-            options: [
-                {
-                    type: 'dropdown',
-                    label: 'LightGroup',
-                    id: 'LightGroup',
-                    default: "Chose LightGroup",
-                    choices: self.lightGroups.map((group) => ({
-                        id: group.id,
-                        label: group.name
-                    }))
-                },
-                {
-                    type: 'dropdown',
-                    label: 'ON/OFF',
-                    id: 'ON/OFF',
-                    default: true,
-                    choices: [{id: true, label: 'ON'}, {id: false, label: 'OFF'}]
-                },
-                {
-                    type: 'number',
-                    label: 'Brightness',
-                    tooltip: 'Sets the Brightness (1-254)',
-                    min: 1,
-                    max: 254,
-                    id: 'bri',
-                    default: 1,
-                    range: false
-                }
-            ]
-        },
-        'Zones_Switch': {
-            label: 'Zones_Switch',
-            options: [
-                {
-                    type: 'dropdown',
-                    label: 'Zones',
-                    id: 'Zones',
-                    default: "Chose Zones",
-                    choices: self.zones.map((zone) => ({
-                        id: zone.id,
-                        label: zone.name
-                    }))
-                },
-                {
-                    type: 'dropdown',
-                    label: 'ON/OFF',
-                    id: 'ON/OFF',
-                    default: true,
-                    choices: [{id: true, label: 'ON'}, {id: false, label: 'OFF'}]
-                }
-            ]
-        },
-        'Zones_Switch_Bri': {
-            label: 'Zones_Switch_Bri',
-            options: [
-                {
-                    type: 'dropdown',
-                    label: 'Zones',
-                    id: 'Zones',
-                    default: "Chose Zones",
-                    choices: self.zones.map((zone) => ({
-                        id: zone.id,
-                        label: zone.name
-                    }))
-                },
-                {
-                    type: 'dropdown',
-                    label: 'ON/OFF',
-                    id: 'ON/OFF',
-                    default: true,
-                    choices: [{id: true, label: 'ON'}, {id: false, label: 'OFF'}]
-                },
-                {
-                    type: 'number',
-                    label: 'Brightness',
-                    tooltip: 'Sets the Brightness (1-254)',
-                    min: 1,
-                    max: 254,
-                    id: 'bri',
-                    default: 1,
-                    range: false
-                    //choices: [ { id: true, label: 'ON' }, { id: false, label: 'OFF' } ]
-                }
-            ]
-        }
-    });
-}
-
-instance.prototype.action = function (action) {
-    var self = this;
-
-    if (!self.api) {
-        return;
-    }
-
-    switch (action.action) {
-        case 'All_Scenes':
-            self.api.scenes.activateScene(action.options.Scenes);
-            break;
-        case 'Lamps_Switch':
-            self.api.lights.setLightState(action.options.Lamps, new v3.lightStates.LightState().on(action.options['ON/OFF']));
-            break;
-        case 'Lamps_Switch_Bri':
-            self.api.lights.setLightState(action.options.Lamps,
-                new v3.lightStates.LightState().on(action.options['ON/OFF']).bri(action.options["bri"]));
-            break;
-        case 'Room_Switch':
-            self.api.groups.setGroupState(action.options.Rooms, new v3.lightStates.GroupLightState().on(action.options['ON/OFF']));
-            break;
-        case 'Room_Switch_Bri':
-            self.api.groups.setGroupState(action.options.Rooms,
-                new v3.lightStates.GroupLightState().on(action.options['ON/OFF']).bri(action.options["bri"]));
-            break;
-        case 'LightGroup_Switch':
-            self.api.groups.setGroupState(action.options.LightGroup, new v3.lightStates.GroupLightState().on(action.options['ON/OFF']));
-            break;
-        case 'LightGroup_Switch_Bri':
-            self.api.groups.setGroupState(action.options.LightGroup,
-                new v3.lightStates.GroupLightState().on(action.options['ON/OFF']).bri(action.options["bri"]));
-            break;
-        case 'Zones_Switch':
-            self.api.groups.setGroupState(action.options.Zones, new v3.lightStates.GroupLightState().on(action.options['ON/OFF']));
-            break;
-        case 'Zones_Switch_Bri':
-            self.api.groups.setGroupState(action.options.Zones,
-                new v3.lightStates.GroupLightState().on(action.options['ON/OFF']).bri(action.options["bri"]));
-            break;
-    }
-};
-
-instance_skel.extendedBy(instance);
-exports = module.exports = instance;
+runEntrypoint(ModuleInstance, UpgradeScripts)
