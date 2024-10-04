@@ -2,28 +2,41 @@
 
 This module will allow you to connect to your Philips Hue bridge and control your lights.
 
+### Upgrade from Companion v2 to v3
+
+Upgrading to Companion `v3.x.x` will break the exisiting configuration of this module. The module was completely overhauled and now supports new actions, feedbacks and variables.
+
 ### Configuration
-1. Select your Hue bridge from the list or enter the IP address manually (bridges are discovered in the background). 
-2. Either [manually create](https://developers.meethue.com/develop/get-started-2/) a bridge user or use the "**Create new User**" checkbox.
+1. Select your Hue bridge from the list or enter the IP address manually (bridges are discovered in the background, reload may be required). 
+2. Either [manually create](https://developers.meethue.com/develop/get-started-2/) a bridge user or use the "**Create new User**" option (bridge user field should be empty).
 3. Creating a user:
-   - Check the "**Create new User**" checkbox.
-   - Press on the big sync button on top of your Hue bridge.
-   - Press "**Apply Changes**" button on Companion config page.
-   - The new user will be created in the background and the configuration will update automatically. Check the log for errors.
+   - Select the "**Create new user**" option.
+   - Press the big sync button on top of your Hue bridge.
+   - Press "**Save**" button on the Companion config page.
+   - The new user will be created in the background and the configuration will update automatically. Check the module state or the log for errors.
 
-### Available actions
+### Actions
 
-| Action                | What it does                                                             |
-|-----------------------|--------------------------------------------------------------------------|
-| All_Scenes            | Trigger a scene                                                          |
-| Lamps_Switch          | Switch lamp on or off                                                    |
-| Lamps_Switch_Bri      | Switch lamp on or off and also set the brightness                        |
-| Room_Switch           | Turn all lights in a room on or off                                      |
-| Room_Switch_Bri       | Turn all lights in a room on or off and also set the brightness          |
-| LightGroup_Switch     | Turn all lights in a group on or off                                     |
-| LightGroup_Switch_Bri | Turn all lights in a group on or off and also set the brightness         |
-| Zones_Switch          | Turn all lights in a specific zone on or off                             |
-| Zones_Switch_Bri      | Turn all lights in a specific zone on or off and also set the brightness |
+| Action | What it does                                                                                            |
+| ------ | ------------------------------------------------------------------------------------------------------- |
+| Scene  | Trigger the selected Scene                                                                              |
+| Light  | Set the state of the selected light (_On_, _Off_, _Toggle_) and optionally set the brightness           |
+| Room   | Set the state of the selected room (_On_, _Off_, _Toggle_) and optionally set the brightness            |
+| Group  | Set the state of the selected group of lights (_On_, _Off_, _Toggle_) and optionally set the brightness |
+| Zone   | Set the state of the selected zone (_On_, _Off_, _Toggle_) and optionally set the brightness            |
 
+### Dynamic Variables
 
+| Variable                   | Description            |
+|----------------------------|------------------------|
+| $(INSTANCENAME:light_{id}) | Name of the light {id} |
+| $(INSTANCENAME:room_{id})  | Name of the room {id}  |
+| $(INSTANCENAME:scene_{id}) | Name of the scene {id} |
 
+Check the **Variables** tab to see all available variables.
+
+### Feedback
+| Feedback | Description                                    |
+|----------|------------------------------------------------|
+| Light    | Sets the button color based on the light state |
+| Room     | Sets the button color based on the room state  |
