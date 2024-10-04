@@ -115,7 +115,7 @@ class ModuleInstance extends InstanceBase {
 				id: 'interval',
 				default: 500,
 				min: 200,
-				tooltip: 'API calls to hue bridge are limited to max 10 per second'
+				tooltip: 'API calls to hue bridge are limited to max 10 per second (100 ms)'
 			}
 		]
 	}
