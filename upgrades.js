@@ -1,13 +1,16 @@
 module.exports = [
-	/*
-	 * Place your upgrade scripts here
-	 * Remember that once it has been added it cannot be removed!
-	 */
-	// function (context, props) {
-	// 	return {
-	// 		updatedConfig: null,
-	// 		updatedActions: [],
-	// 		updatedFeedbacks: [],
-	// 	}
-	// },
+	function v1_0_0(context, props) {
+		const result = {
+			updatedConfig: null,
+			updatedActions: [],
+			updatedFeedbacks: [],
+		}
+
+		if (props.config && props.config.interval === undefined) {
+			props.config.interval = 500;
+			result.updatedConfig = props.config
+		}
+
+		return result
+	},
 ]
