@@ -4,8 +4,8 @@ const state = {
     id: 'state',
     type: 'dropdown',
     label: 'State',
-    default: true,
-    choices: [{ id: true, label: 'On' }, { id: false, label: 'Off' }, { id: 'toggle', label: 'Toggle' }]
+    default: 'on',
+    choices: [{ id: 'on', label: 'On' }, { id: 'off', label: 'Off' }, { id: 'toggle', label: 'Toggle' }]
 };
 
 const setBrightness = {
@@ -13,7 +13,7 @@ const setBrightness = {
     label: 'Set Brightness?',
     id: 'setBrightness',
     default: false,
-    isVisible: (config) => config.state === true
+    isVisible: (config) => config.state === 'on'
 };
 
 const brightness = {
@@ -26,25 +26,28 @@ const brightness = {
     max: 254,
     default: 100,
     range: true,
-    isVisible: (config) => config.state === true && config.setBrightness === true,
+    isVisible: (config) => config.state === 'on' && config.setBrightness === true,
 };
 
 function getLightState(elements, options, type) {
-    var state = options.state;
-
-    if (state === 'toggle') {
-        const element = elements.find((element) => element.id == options[type]);
-        if (element) {
-            if ('on' in element.state) {
-                state = !element.state.on;
+    switch (options.state) {
+        case 'on':
+            return true;
+        case 'off':
+            return false;
+        case 'toggle':
+            const element = elements.find((element) => element.id == options[type]);
+            if (element) {
+                if ('on' in element.state) {
+                    return !element.state.on;
+                }
+                else if ('any_on' in element.state) {
+                    return !element.state.any_on;
+                }
             }
-            else if ('any_on' in element.state) {
-                state = !element.state.any_on;
-            }
-        }
     }
 
-    return state;
+    return false;
 }
 
 module.exports = function (self) {
@@ -111,7 +114,7 @@ module.exports = function (self) {
 
                 return {
                     ...action.options,
-                    state: light.state.on,
+                    state: light.state.on ? 'on' : 'off',
                     brightness: light.state.bri,
                 }
             },
