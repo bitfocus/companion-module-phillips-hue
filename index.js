@@ -42,9 +42,11 @@ class ModuleInstance extends InstanceBase {
 						delete this.pollingTimer;
 					}
 
-					this.pollingTimer = setInterval(() => {
-						this.updateParams();
-					}, this.config.interval);
+					if (this.config.interval) {
+						this.pollingTimer = setInterval(() => {
+							this.updateParams();
+						}, this.config.interval);
+					}
 				}).catch(err => {
 					this.log('error', 'Unable to use API: ' + err.message);
 					this.updateStatus(InstanceStatus.BadConfig, 'Invalid user name');
