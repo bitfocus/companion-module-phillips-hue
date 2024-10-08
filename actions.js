@@ -52,7 +52,7 @@ function getLightState(elements, options, type) {
 
 module.exports = function (self) {
     self.setActionDefinitions({
-        scenes: {
+        scene: {
             name: 'Scene',
             options: [
                 {
