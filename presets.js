@@ -21,7 +21,7 @@ function buildPresets(self) {
                             actionId: 'light',
                             options: {
                                 light: light.id,
-                                state: true,
+                                state: 'on',
                             },
                         },
                     ],
@@ -59,7 +59,7 @@ function buildPresets(self) {
                             actionId: 'room',
                             options: {
                                 room: room.id,
-                                state: true,
+                                state: 'on',
                             },
                         },
                     ],
@@ -97,7 +97,7 @@ function buildPresets(self) {
                             actionId: 'scene',
                             options: {
                                 scene: scene.id,
-                                state: true,
+                                state: 'on',
                             },
                         },
                     ],
