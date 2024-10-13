@@ -2,10 +2,6 @@
 
 This module will allow you to connect to your Philips Hue bridge and control your lights.
 
-### Upgrade from Companion v2 to v3
-
-Upgrading to Companion `v3.x.x` will break the exisiting configuration of this module. The module was completely overhauled and now supports new actions, feedbacks and variables.
-
 ### Configuration
 1. Select your Hue bridge from the list or enter the IP address manually (bridges are discovered in the background, reload may be required). 
 2. Either [manually create](https://developers.meethue.com/develop/get-started-2/) a bridge user or use the "**Create new User**" option (bridge user field should be empty).

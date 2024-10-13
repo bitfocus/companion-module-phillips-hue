@@ -1,10 +1,10 @@
 module.exports = [
-	function (context, config) {
-		// just an example, that now cannot be removed/rewritten
-		if (config) {
-			if (config.host !== undefined) {
-				config.old_host = config.host;
-			}
+	function (context, props) {
+		// this cannot be removed, because it was part of an older version
+		return {
+			updatedConfig: null,
+			updatedActions: [],
+			updatedFeedbacks: [],
 		}
 	},
 
