@@ -26,6 +26,14 @@ function buildVariables(self) {
         values[`scene_${scene.id}`] = scene.name;
     });
 
+    self.zones.forEach((zone) => {
+        variables.push({
+            variableId: `zone_${zone.id}`,
+            name: `Zone ${zone.name}`,
+        });
+        values[`zone_${zone.id}`] = zone.name;
+    });
+
     self.setVariableDefinitions(variables);
     self.setVariableValues(values);
 }

@@ -79,6 +79,44 @@ function buildPresets(self) {
         }
     });
 
+    self.zones.forEach((zone) => {
+        presets[`zone_${zone.id}`] = {
+            type: 'button',
+            category: 'Zone',
+            name: zone.name,
+            style: {
+                text: `$(hue:zone_${zone.id})`,
+                size: 'auto',
+                color: combineRgb(255, 255, 255),
+                bgcolor: combineRgb(0, 0, 0),
+            },
+            steps: [
+                {
+                    down: [
+                        {
+                            actionId: 'zone',
+                            options: {
+                                zone: zone.id,
+                                state: 'on',
+                            },
+                        },
+                    ],
+                    up: [],
+                },
+            ],
+            feedbacks: [{
+                feedbackId: 'zone',
+                options: {
+                    zone: zone.id,
+                },
+                style: {
+                    bgcolor: combineRgb(0, 255, 0),
+                    color: combineRgb(0, 0, 0),
+                },
+            }]
+        }
+    });
+
     self.scenes.forEach((scene) => {
         presets[`scene_${scene.id}`] = {
             type: 'button',

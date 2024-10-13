@@ -58,5 +58,33 @@ module.exports = function (self) {
                 }
             }
         },
+        zone: {
+            name: 'Zone',
+            type: 'boolean',
+            defaultStyle: {
+                bgcolor: combineRgb(0, 255, 0),
+                color: combineRgb(0, 0, 0),
+            },
+            options: [
+                {
+                    id: 'zone',
+                    type: 'dropdown',
+                    label: 'Zone',
+                    required: true,
+                    default: "Select zone",
+                    choices: self.zones.map((zone) => ({
+                        id: zone.id,
+                        label: zone.name
+                    }))
+                }
+            ],
+            callback: async (feedback) => {
+                const zone = self.zones.find((zone) => zone.id == feedback.options.zone);
+
+                if (zone) {
+                    return zone.state.any_on;
+                }
+            }
+        },
     })
 }
