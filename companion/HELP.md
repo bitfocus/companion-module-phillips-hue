@@ -28,6 +28,7 @@ This module will allow you to connect to your Philips Hue bridge and control you
 | $(INSTANCENAME:light_{id}) | Name of the light {id} |
 | $(INSTANCENAME:room_{id})  | Name of the room {id}  |
 | $(INSTANCENAME:scene_{id}) | Name of the scene {id} |
+| $(INSTANCENAME:zone_{id})  | Name of the zone {id} |
 
 Check the **Variables** tab to see all available variables.
 
@@ -36,3 +37,4 @@ Check the **Variables** tab to see all available variables.
 |----------|------------------------------------------------|
 | Light    | Sets the button color based on the light state |
 | Room     | Sets the button color based on the room state  |
+| Zone     | Sets the button color based on the zone state  |

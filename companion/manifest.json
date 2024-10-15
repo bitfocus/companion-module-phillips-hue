@@ -3,7 +3,7 @@
 	"name": "philips-hue",
 	"shortname": "hue",
 	"description": "Philips Hue module for Companion",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-phillips-hue.git",
 	"bugs": "https://github.com/bitfocus/companion-module-phillips-hue/issues",
