@@ -8,7 +8,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bitfocus/companion-module-phillips-hue.git"
+		"url": "git+https://github.com/bitfocus/companion-module-philips-hue.git"
 	},
 	"dependencies": {
 		"@companion-module/base": "~1.4.0",
