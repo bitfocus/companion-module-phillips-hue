@@ -1,3 +1,3 @@
-# companion-module-phillips-hue
+# companion-module-philips-hue
 
 See [HELP.md](./companion/HELP.md) and [LICENSE](./LICENSE)
